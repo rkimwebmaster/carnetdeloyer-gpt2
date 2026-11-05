@@ -19,6 +19,7 @@ La version du cahier des charges (v2.1) est distincte des étapes de livraison d
 cd api
 composer install
 # Base locale : DATABASE_URL dans .env.local (MySQL 8 ou MariaDB 10.11)
+php bin/console app:referentiels:charger --verifier-schema # base existante : contrôle en lecture seule avant toute migration
 php bin/console lexik:jwt:generate-keypair
 php bin/console doctrine:database:create
 php bin/console doctrine:migrations:migrate
@@ -54,6 +55,10 @@ flutter run --dart-define=CDL_API_URL=http://192.168.1.10:8000   # téléphone r
 ```
 
 ## Tests
+
+GitHub Actions exécute les tests API sous PHP 8.2 avec une base MariaDB jetable,
+ainsi que l’analyse et les tests Flutter, à chaque push et pull request.
+Un workflow présent ne prouve pas qu’une exécution est réussie : consulter ses résultats.
 
 | Commande | Couvre |
 |---|---|

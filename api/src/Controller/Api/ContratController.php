@@ -20,6 +20,7 @@ use App\Service\Contrats;
 use App\Service\Echeancier;
 use App\Service\Espaces;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Clock\ClockInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -36,6 +37,7 @@ final class ContratController extends ApiController
         private readonly Echeancier $echeancier,
         private readonly Espaces $espaces,
         private readonly Chiffreur $chiffreur,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -53,7 +55,8 @@ final class ContratController extends ApiController
             $qb->andWhere('c.statut = :s')->setParameter('s', $statut);
         }
         if ($request->query->getBoolean('enRetard')) {
-            $qb->andWhere('EXISTS (SELECT e.id FROM App\Entity\Echeance e WHERE e.contrat = c AND e.annulee = false AND e.montantPaye < e.montantDu AND e.dateExigible < CURRENT_DATE())');
+            $qb->andWhere('EXISTS (SELECT e.id FROM App\Entity\Echeance e WHERE e.contrat = c AND e.annulee = false AND e.montantPaye < e.montantDu AND e.dateExigible < :aujourdhui)')
+                ->setParameter('aujourdhui', $this->clock->now()->setTime(0, 0), \Doctrine\DBAL\Types\Types::DATE_IMMUTABLE);
         }
 
         return $this->page($request, $qb, $this->p->contratResume(...));

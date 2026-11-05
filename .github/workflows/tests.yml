@@ -1,0 +1,74 @@
+name: Tests CarnetDeLoyer
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API PHP 8.2 / MariaDB
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: test-only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    defaults:
+      run:
+        working-directory: api
+    env:
+      APP_ENV: test
+      DATABASE_URL: mysql://root:test-only@127.0.0.1:3306/cdl_ci?serverVersion=10.11.0-MariaDB&charset=utf8mb4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: ctype, iconv, pdo_mysql, pdo_sqlite, mbstring, intl, dom, xml, xmlwriter
+          coverage: none
+          tools: composer:v2
+      - run: composer validate --no-check-publish
+      - run: composer install --no-interaction --prefer-dist
+      - name: Syntaxe PHP
+        run: find src tests -name '*.php' -print0 | xargs -0 -n 1 php -l
+      - name: Tests unitaires et API, migrations réelles
+        run: php vendor/bin/phpunit --log-junit ../resultats-api.xml
+      - name: Compatibilité des référentiels et mappings
+        run: |
+          php bin/console app:referentiels:charger --verifier-schema
+          php bin/console doctrine:schema:validate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resultats-api
+          path: resultats-api.xml
+
+  mobile:
+    name: Flutter analyse et tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter analyze
+      - run: flutter test
