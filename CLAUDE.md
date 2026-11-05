@@ -5,7 +5,7 @@ Un seul dépôt : API Symfony, application Flutter (Android, iOS, Windows), back
 
 ## Règle d'or
 
-- **La spécification fait foi** : `docs/specification/cahier-des-charges.md` (règles numérotées R-xx).
+- **La spécification fait foi** : `docs/specification/cahier-de-charge.md` (règles numérotées R-xx).
   Version de référence modifiable : https://claude.ai/artifact/7NWj6LjLGfz1LZjz8mATEb
 - Si le code s'écarte de la spec, **signaler l'écart avant de corriger**, jamais de résolution silencieuse.
 - Ce que la spec ne précise pas : suivre les conventions déjà présentes dans le code.
