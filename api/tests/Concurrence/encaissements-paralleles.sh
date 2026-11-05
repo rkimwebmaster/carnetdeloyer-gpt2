@@ -21,7 +21,11 @@ echo $c->get("lexik_jwt_authentication.jwt_manager")->create($u);
 ')
 
 JOURNAL=$(mktemp)
-PHP_CLI_SERVER_WORKERS=8 php -d variables_order=EGPCS -S 127.0.0.1:$PORT -t public >"$JOURNAL" 2>&1 &
+# Les workers forkent le serveur CLI : ne pas partager son cache OPCache/JIT.
+# Préparer aussi le conteneur Symfony avant les requêtes parallèles.
+export APP_DEBUG=0
+php bin/console cache:warmup --env=dev --no-debug -q
+PHP_CLI_SERVER_WORKERS=8 php -d variables_order=EGPCS -d opcache.enable_cli=0 -d opcache.jit=0 -S 127.0.0.1:$PORT -t public >"$JOURNAL" 2>&1 &
 SERVEUR=$!
 # En cas d'échec, afficher le journal du serveur pour le diagnostic.
 diagnostic() {
