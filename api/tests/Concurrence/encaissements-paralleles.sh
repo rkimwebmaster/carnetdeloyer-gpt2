@@ -16,7 +16,7 @@ $k = new App\Kernel("dev", false); $k->boot(); $c = $k->getContainer();
 $em = $c->get("doctrine")->getManager(); $ch = $c->get(App\Securite\Chiffreur::class);
 $tel = "+2439".random_int(10000000, 99999999);
 $u = new App\Entity\User($tel, $ch->empreinte($tel), "Concurrence", "C".random_int(100000, 999999));
-$em->persist($u); $em->flush();
+$u->verifierTelephone(); $em->persist($u); $em->flush();
 echo $c->get("lexik_jwt_authentication.jwt_manager")->create($u);
 ')
 

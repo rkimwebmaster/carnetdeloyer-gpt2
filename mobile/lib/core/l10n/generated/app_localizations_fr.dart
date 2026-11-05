@@ -481,7 +481,43 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucun contrat rattaché à votre numéro pour l\'instant.';
 
   @override
-  String get locationsRattacher => 'Rattacher';
+  String get locationsRattacher => 'Confirmer ce contrat';
+
+  @override
+  String get locationsRefuser => 'Ne me concerne pas';
+
+  @override
+  String get profilChangerTelephone => 'Changer mon numéro';
+
+  @override
+  String get profilTelephoneAide => 'Vérifiez votre nouveau numéro par SMS. Votre compte, vos contrats et vos reçus seront conservés.';
+
+  @override
+  String get profilEnvoyerCode => 'Envoyer le code';
+
+  @override
+  String get profilCodeEnvoye => 'Code envoyé au nouveau numéro.';
+
+  @override
+  String get erreurTELEPHONE_DEJA_UTILISE => 'Ce numéro appartient déjà à un autre compte. Choisissez un autre numéro.';
+
+  @override
+  String activiteContratConfirme(String unite) => 'Contrat confirmé par le locataire : $unite';
+
+  @override
+  String activiteContratRefuse(String unite) => 'Contrat refusé par le locataire : $unite. Vérifiez le numéro.';
+
+  @override
+  String get locationsRefusAide => 'Ce contrat sera retiré de votre espace. Le bailleur sera informé et pourra corriger le numéro ; son contrat restera conservé.';
+
+  @override
+  String get erreurLOCATAIRE_CONFIRME => 'Ce numéro a déjà été confirmé. Seul le locataire peut le changer après vérification OTP.';
+
+  @override
+  String get erreurTELEPHONE_NON_VERIFIE => 'Vérifiez votre numéro de téléphone par OTP pour continuer.';
+
+  @override
+  String get erreurCONFIRMATION_PAR_CONTRAT_REQUISE => 'Confirmez chaque contrat séparément depuis Mes locations.';
 
   @override
   String get locationsARattacher => 'Contrats à confirmer';

@@ -156,12 +156,12 @@ final class ContratController extends ApiController
     public function modifierContact(int $id, #[MapRequestPayload] ModificationContact $dto): JsonResponse
     {
         $contact = $this->acces->contact($this->moi(), $id);
-        if (null !== $dto->nom) {
-            $contact->setNom(trim($dto->nom));
-        }
         if (null !== $dto->telephone) {
             [$tel, $empreinte] = $this->telephone($dto->telephone, 'telephone');
-            $contact->changerTelephone($tel, $empreinte);
+            $this->contrats->corrigerTelephone($contact, $tel, $empreinte);
+        }
+        if (null !== $dto->nom) {
+            $contact->setNom(trim($dto->nom));
         }
         $this->em->flush();
 

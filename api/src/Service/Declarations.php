@@ -30,7 +30,7 @@ final class Declarations
 
     public function declarer(Contrat $contrat, User $locataire, int $montant, \DateTimeImmutable $datePaiement, ?string $reference): DeclarationPaiement
     {
-        if ($contrat->getLocataire()->getUtilisateur()?->getId() !== $locataire->getId()) {
+        if (!$contrat->estAccessibleParLocataire($locataire)) {
             throw ErreurMetier::introuvable('Contrat');
         }
         if (!$contrat->isActif()) {

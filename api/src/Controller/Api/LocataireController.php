@@ -13,6 +13,7 @@ use App\Enum\StatutPaiement;
 use App\Securite\Acces;
 use App\Securite\Chiffreur;
 use App\Service\Declarations;
+use App\Service\Contrats;
 use App\Service\Echeancier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,6 +32,7 @@ final class LocataireController extends ApiController
         private readonly Chiffreur $chiffreur,
         private readonly Echeancier $echeancier,
         private readonly Declarations $declarations,
+        private readonly Contrats $serviceContrats,
     ) {
     }
 
@@ -41,7 +43,10 @@ final class LocataireController extends ApiController
         $contacts = $this->contactsARattacher();
         $resultat = [];
         foreach ($contacts as $contact) {
-            $contrats = $this->em->getRepository(Contrat::class)->findBy(['locataire' => $contact], ['createdAt' => 'DESC']);
+            $contrats = $this->em->getRepository(Contrat::class)->findBy(['locataire' => $contact, 'locataireConfirmeLe' => null, 'locataireRefuseLe' => null], ['createdAt' => 'DESC']);
+            if ([] === $contrats) {
+                continue;
+            }
             $resultat[] = [
                 'contactId' => $contact->getId(),
                 'bailleur' => $contact->getEspace()->nomAffiche(),
@@ -57,8 +62,11 @@ final class LocataireController extends ApiController
         $moi = $this->moi();
         foreach ($this->contactsARattacher() as $contact) {
             if ($contact->getId() === $contactId) {
-                $contact->rattacher($moi);
-                $this->em->flush();
+                $contrats = $this->em->getRepository(Contrat::class)->findBy(['locataire' => $contact, 'locataireConfirmeLe' => null, 'locataireRefuseLe' => null]);
+                if (1 !== \count($contrats)) {
+                    throw new ErreurMetier('CONFIRMATION_PAR_CONTRAT_REQUISE', 'Choisissez le contrat à confirmer.', 409);
+                }
+                $this->serviceContrats->confirmerLocataire($contrats[0], $moi);
 
                 return $this->json(['rattache' => true]);
             }
@@ -66,11 +74,29 @@ final class LocataireController extends ApiController
         throw ErreurMetier::introuvable('Rattachement');
     }
 
+    #[Route('/contrats/{id<\d+>}/confirmation', methods: ['POST'])]
+    public function confirmer(int $id): JsonResponse
+    {
+        $contrat = $this->em->find(Contrat::class, $id) ?? throw ErreurMetier::introuvable('Rattachement');
+        $this->serviceContrats->confirmerLocataire($contrat, $this->moi());
+
+        return $this->json(['confirme' => true]);
+    }
+
+    #[Route('/contrats/{id<\d+>}/refus', methods: ['POST'])]
+    public function refuser(int $id): JsonResponse
+    {
+        $contrat = $this->em->find(Contrat::class, $id) ?? throw ErreurMetier::introuvable('Rattachement');
+        $this->serviceContrats->refuserLocataire($contrat, $this->moi());
+
+        return $this->json(['refuse' => true]);
+    }
+
     #[Route('/contrats', methods: ['GET'])]
     public function contrats(Request $request): JsonResponse
     {
         $qb = $this->em->createQueryBuilder()->select('c')->from(Contrat::class, 'c')
-            ->join('c.locataire', 'l')->where('l.utilisateur = :u')->setParameter('u', $this->moi())
+            ->join('c.locataire', 'l')->where('l.utilisateur = :u AND c.locataireConfirmeLe IS NOT NULL AND c.locataireRefuseLe IS NULL')->setParameter('u', $this->moi())
             ->orderBy('c.statut', 'ASC')->addOrderBy('c.createdAt', 'DESC');
 
         return $this->page($request, $qb, $this->p->contratResume(...));
@@ -111,7 +137,7 @@ final class LocataireController extends ApiController
     {
         $qb = $this->em->createQueryBuilder()->select('pa')->from(Paiement::class, 'pa')
             ->join('pa.contrat', 'c')->join('c.locataire', 'l')
-            ->where('l.utilisateur = :u')->setParameter('u', $this->moi())
+            ->where('l.utilisateur = :u AND c.locataireConfirmeLe IS NOT NULL AND c.locataireRefuseLe IS NULL')->setParameter('u', $this->moi())
             ->orderBy('pa.datePaiement', 'DESC')->addOrderBy('pa.id', 'DESC');
         if ($request->query->getBoolean('validesSeulement')) {
             $qb->andWhere('pa.statut = :s')->setParameter('s', StatutPaiement::Valide);
@@ -129,6 +155,6 @@ final class LocataireController extends ApiController
             return [];
         }
 
-        return $this->em->getRepository(Contact::class)->findBy(['telephoneEmpreinte' => $this->chiffreur->empreinte($telephone), 'utilisateur' => null]);
+        return $this->em->getRepository(Contact::class)->findBy(['telephoneEmpreinte' => $this->chiffreur->empreinte($telephone)]);
     }
 }

@@ -24,7 +24,7 @@ $sortie = [];
 foreach (["Bailleur intégration", "Locataire intégration"] as $i => $nom) {
     $tel = "+2439".random_int(10000000, 99999999);
     $u = new App\Entity\User($tel, $ch->empreinte($tel), $nom, "I".$i.random_int(10000, 99999));
-    $u->setPays($pays); $em->persist($u); $em->flush();
+    $u->setPays($pays); $u->verifierTelephone(); $em->persist($u); $em->flush();
     $sortie[] = $jwt->create($u); $dernierTel = $tel;
 }
 echo $sortie[0], " ", $sortie[1], " ", $dernierTel, "\n";
