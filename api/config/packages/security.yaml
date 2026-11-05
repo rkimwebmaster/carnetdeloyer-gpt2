@@ -1,0 +1,30 @@
+security:
+    role_hierarchy:
+        # R-116 : le support (ROLE_ADMIN) n'a accès ni aux paramètres ni au wallet.
+        ROLE_SUPER_ADMIN: ROLE_ADMIN
+
+    providers:
+        utilisateurs:
+            entity:
+                class: App\Entity\User
+                property: id
+
+    firewalls:
+        dev:
+            pattern: ^/(_profiler|_wdt)
+            security: false
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: utilisateurs
+            entry_point: jwt
+            jwt: ~
+            refresh_jwt:
+                check_path: /api/v1/auth/token/rafraichir
+
+    access_control:
+        # R-15 : référentiels publics en lecture seule (nécessaires à l'inscription).
+        - { path: ^/api/v1/referentiels, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/auth, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/admin, roles: ROLE_ADMIN }
+        - { path: ^/api, roles: ROLE_USER }

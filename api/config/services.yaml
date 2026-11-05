@@ -1,0 +1,32 @@
+parameters:
+    app.chiffrement_cle: '%env(APP_CHIFFREMENT_CLE)%'
+    app.url_publique: '%env(default:app.url_publique_defaut:APP_URL_PUBLIQUE)%'
+    app.url_publique_defaut: 'http://localhost:8000'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        bind:
+            string $urlPublique: '%app.url_publique%'
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/Entity/'
+            - '../src/Enum/'
+            - '../src/Kernel.php'
+
+    App\Securite\Chiffreur:
+        public: true
+        arguments:
+            $cleBase64: '%app.chiffrement_cle%'
+
+    App\Service\ConversionMonetaire:
+        arguments:
+            $urlTaux: '%env(default::APP_TAUX_CHANGE_URL)%'
+
+    App\Sms\SmsEnvoyeurInterface:
+        factory: ['@App\Sms\FabriqueSms', 'creer']
+        arguments: ['%env(APP_SMS_FOURNISSEUR)%']
+        public: true

@@ -1,0 +1,8 @@
+# R-140 : refresh token de 60 jours avec rotation (usage unique).
+gesdinet_jwt_refresh_token:
+    refresh_token_class: App\Entity\RefreshToken
+    ttl: 5184000
+    ttl_update: false
+    single_use: true
+    token_parameter_name: refresh_token
+    return_expiration: true

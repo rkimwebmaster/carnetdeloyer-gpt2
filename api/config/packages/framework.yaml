@@ -1,0 +1,21 @@
+framework:
+    secret: '%env(APP_SECRET)%'
+    session: false
+    http_method_override: false
+    rate_limiter:
+        # R-71 : limiter l'envoi d'OTP par numéro et par IP.
+        otp_par_telephone:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+        otp_par_ip:
+            policy: sliding_window
+            limit: 30
+            interval: '1 hour'
+
+when@test:
+    framework:
+        test: true
+        cache:
+            # Tests : cache (et limiteurs de débit) en mémoire, remis à zéro à chaque requête.
+            app: cache.adapter.array

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Reçu {{ recu.numero }} · CarnetDeLoyer</title>
+    <style>
+        :root { --encre: #1d2433; --doux: #5b6577; --ligne: #e3e6ec; --accent: #1f6f5c; --alerte: #b42318; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--encre); background: #f5f6f8; }
+        main { max-width: 560px; margin: 24px auto; padding: 0 16px; }
+        .carte { background: #fff; border: 1px solid var(--ligne); border-radius: 12px; padding: 24px; }
+        h1 { font-size: 1.1rem; margin: 0 0 4px; }
+        .numero { color: var(--doux); font-variant-numeric: tabular-nums; }
+        .montant { font-size: 2rem; font-weight: 700; margin: 20px 0 4px; font-variant-numeric: tabular-nums; }
+        dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 20px 0 0; }
+        dt { color: var(--doux); }
+        dd { margin: 0; text-align: right; }
+        .annule { border: 2px solid var(--alerte); color: var(--alerte); padding: 8px 12px; border-radius: 8px; font-weight: 600; margin-bottom: 16px; }
+        footer { color: var(--doux); font-size: .8rem; text-align: center; margin-top: 16px; }
+    </style>
+</head>
+<body>
+<main>
+    <div class="carte">
+        {% if recu.annule %}
+            <div class="annule">Reçu annulé{% if paiement.motifAnnulation %} : {{ paiement.motifAnnulation }}{% endif %}</div>
+        {% endif %}
+        <h1>{{ espace.nomAffiche }}</h1>
+        {% if espace.numeroRccm %}<div class="numero">RCCM {{ espace.numeroRccm }}</div>{% endif %}
+        {% if espace.adresse %}<div class="numero">{{ espace.adresse }}</div>{% endif %}
+        <p class="numero">Reçu n° {{ recu.numero }}</p>
+        <div class="montant">{{ montant }} {{ devise.symbole }}</div>
+        <div class="numero">{{ estGarantie ? 'Garantie locative' : 'Paiement de loyer' }}</div>
+        <dl>
+            <dt>Locataire</dt><dd>{{ contrat.locataire.nom }}</dd>
+            <dt>Logement</dt><dd>{{ contrat.unite.nom }} · {{ contrat.unite.propriete.nom }}</dd>
+            <dt>Date du paiement</dt><dd>{{ paiement.datePaiement|date('d/m/Y') }}</dd>
+            <dt>Moyen</dt><dd>{{ {especes: 'Espèces', mobile_money: 'Mobile money', virement: 'Virement', autre: 'Autre', garantie: 'Garantie imputée'}[paiement.moyen.value] }}</dd>
+            {% if paiement.reference %}<dt>Référence</dt><dd>{{ paiement.reference }}</dd>{% endif %}
+            <dt>Émis le</dt><dd>{{ recu.emisLe|date('d/m/Y H:i') }}</dd>
+        </dl>
+    </div>
+    <footer>Reçu émis avec CarnetDeLoyer. Ce lien est personnel : ne le partagez qu'avec les personnes concernées.</footer>
+</main>
+</body>
+</html>

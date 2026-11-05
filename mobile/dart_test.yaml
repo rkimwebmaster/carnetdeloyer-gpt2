@@ -1,0 +1,4 @@
+tags:
+  integration:
+    # Lancés explicitement par scripts/test-integration.sh.
+    skip: "Test d'intégration : lancer scripts/test-integration.sh"
