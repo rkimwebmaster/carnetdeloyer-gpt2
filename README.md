@@ -1,11 +1,14 @@
 # CarnetDeLoyer
 
 Gestion locative pour les bailleurs professionnels : biens, contrats, échéances, paiements et reçus, avec un mode locataire, une vitrine Market et une vitrine Hôtels.
-Ce dépôt contient la **v0.1 (Location)** de la spécification fonctionnelle v2.0.
+Ce dépôt contient une **implémentation de la v0.1 (Location), en cours d’alignement sur la spécification fonctionnelle v2.1 du 4 novembre 2026**.
+
+Référence métier : [cahier des charges](docs/specification/cahier-de-charge.md). Référence visuelle : [charte graphique](docs/design/charte-graphique.md).
+La version du cahier des charges (v2.1) est distincte des étapes de livraison du produit (v0.1, v0.5, v0.9).
 
 | Dossier | Contenu |
 |---|---|
-| `api/` | API REST Symfony 7.4 (PHP 8.3, Doctrine, MySQL/MariaDB), sous `/api/v1` |
+| `api/` | API REST Symfony 7.4 (PHP 8.2 minimum, Doctrine, MySQL/MariaDB), sous `/api/v1` |
 | `mobile/` | Application Flutter (Android, iOS, Windows) : Riverpod, Dio, go_router, Drift |
 | `scripts/` | Test de bout en bout app ↔ API |
 | `.github/workflows/` | Intégration continue (bloquante, R-154) |
@@ -54,16 +57,16 @@ flutter run --dart-define=CDL_API_URL=http://192.168.1.10:8000   # téléphone r
 
 | Commande | Couvre |
 |---|---|
-| `cd api && php vendor/bin/phpunit` | 115 tests : unitaires (argent en entiers, calendrier, chiffrement, filtre de coordonnées) et fonctionnels sur base réelle (chaque test isolé en transaction) |
+| `cd api && php vendor/bin/phpunit` | Suite API : unitaires (argent en entiers, calendrier, chiffrement, filtre de coordonnées) et fonctionnels sur base réelle (chaque test isolé en transaction) |
 | `cd api && ./tests/Concurrence/encaissements-paralleles.sh` | 30 encaissements simultanés : aucun montant perdu, reçus sans trou ni doublon, idempotence |
-| `cd mobile && flutter test` | 34 tests : client HTTP et rafraîchissement du token, file de paiements hors ligne, PIN, redirections, écrans (inscription, verrou, bascule de mode, encaissement) |
+| `cd mobile && flutter test` | Suite Flutter : client HTTP et rafraîchissement du token, file de paiements hors ligne, PIN, redirections, écrans (inscription, verrou, bascule de mode, encaissement) |
 | `./scripts/test-integration.sh` | les services Flutter contre l'API réelle (parcours bailleur et locataire) |
 
-## Ce qui est livré (v0.1)
+## Fonctionnalités présentes — conformité v2.1 à vérifier
 
 - **Compte** : inscription par OTP en moins d'une minute, code parrain, JWT 1 h + refresh 60 jours avec rotation, PIN et biométrie hors ligne, choix du mode, bascule bailleur/locataire (menu latéral), export et suppression du compte.
 - **Biens** : propriétés simples ou immeubles, unités typées (icônes gérées en base), publication gratuite des unités vacantes sur le Market.
-- **Contrats** : devise proposée selon le pays, un contrat actif par unité, échéances mensuelles sur 12 mois glissants, statuts calculés, garantie séparée, clôture (échéances annulées, dernière échéance ajustable, règlement de la garantie).
+- **Contrats** : devise proposée selon le pays, un contrat actif par unité, échéances mensuelles sur 12 mois glissants, statuts calculés, garantie distinguée des loyers mais encore stockée dans le contrat, clôture (échéances annulées, dernière échéance ajustable, règlement de la garantie).
 - **Paiements** : montant pré-rempli, avance de plusieurs mois, paiement partiel, imputation sur l'échéance la plus ancienne (correction manuelle possible), reçus numérotés sans trou par espace, lien public, partage WhatsApp/SMS, annulation motivée, file hors ligne avec clé d'idempotence.
 - **Locataire** : rattachement par téléphone après confirmation, consultation des contrats et reçus, « J'ai payé » validé ou refusé par le bailleur.
 - **Abonnement** : 1re unité gratuite 12 mois, 9,9 % du loyer par an et par unité en USD, grâce de 15 jours puis suspension, réactivation sans rattrapage, reste crédité au wallet, paiement par wallet ou mobile money validé au back-office.
@@ -76,3 +79,16 @@ flutter run --dart-define=CDL_API_URL=http://192.168.1.10:8000   # téléphone r
 - Interface web du back-office (les opérations existent dans l'API sous `/api/v1/admin`).
 - Faire relire la politique de confidentialité et fixer la durée légale de conservation (section 12 de la spec).
 - Hôtels (séjours, v0.5) et Market complet (photos, déblocage payant, ventes, v0.9).
+
+
+## Alignement v2.1 : écarts constatés et ordre de travail
+
+Revue documentaire et ciblée du code le 5 novembre 2026 ; ce relevé n’est pas un audit exhaustif et ne constitue pas une validation des fonctionnalités.
+
+1. **Référentiels avant migration (R-15 à R-18)** : les mappings du dépôt utilisent `pays`, `villes` et `devise`. Comparer colonnes, types, index et relations à la base réellement utilisée sur le PC ; les noms de tables seuls ne prouvent pas la compatibilité. Ne pas lancer de migration sur cette base avant cette comparaison.
+2. **Contrats (R-175, R-176, R-179, R-177, R-178)** : `Contrat` ne possède pas encore de périodicité ni de jour de paiement dédié. Prévoir les proratas et le renouvellement avec approbation, en protégeant les paiements existants.
+3. **Garantie et sortie (R-30, R-37)** : les champs restent intégrés à `Contrat`. Les entités séparées, les versements multiples et le prorata automatique de sortie restent à implémenter ; `Contrats::cloturer` accepte actuellement un ajustement manuel.
+4. **Identité visuelle** : `mobile/lib/core/theme/theme.dart` utilise encore le vert ; l’aligner sur le bordeaux et l’ambre de la charte, sans changer les fonctionnalités.
+5. **Autres parcours à auditer** : compte locataire non vérifié, refus et confirmation (R-19, R-72, R-182), preuves privées (R-180), historique des abonnements (R-183), rappels et SMS payants (R-181, R-184, R-185), cache mixte (R-186, R-187), rôles territoriaux et site vitrine (R-188, R-189).
+
+Tests à exécuter pour les futurs changements métier : création et confirmation du contrat, jour de paiement et proratas, renouvellement, garantie et clôture, non-régression des paiements/reçus, idempotence et accès par territoire. Les commandes ci-dessus sont des instructions ; leurs résultats ne sont pas attestés par cette revue documentaire.
