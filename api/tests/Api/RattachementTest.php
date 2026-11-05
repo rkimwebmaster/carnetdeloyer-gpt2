@@ -34,6 +34,7 @@ final class RattachementTest extends ApiTestCase
         $verification = $this->ok(200, $this->api('POST', '/api/v1/auth/otp/verification', ['telephone' => $tel, 'code' => $m[1]]));
         self::assertTrue($verification['inscriptionRequise']);
         self::assertArrayNotHasKey('token', $verification);
+        $this->erreur(422, 'CODE_PARRAIN_INCONNU', $this->api('POST', '/api/v1/auth/inscription', ['telephone' => $tel, 'nom' => 'Mon vrai nom', 'jetonInscription' => $verification['jetonInscription'], 'codeParrain' => $provisoire->getCodeParrainage()]));
         $this->ok(201, $this->api('POST', '/api/v1/auth/inscription', ['telephone' => $tel, 'nom' => 'Mon vrai nom', 'jetonInscription' => $verification['jetonInscription']]));
         $user = $this->em()->find(User::class, $id);
         self::assertTrue($user->isTelephoneVerifie());
@@ -150,7 +151,11 @@ final class RattachementTest extends ApiTestCase
         $user = $this->utilisateur();
         $autre = $this->utilisateur('Autre');
         $avant = $user->getTelephone();
-        $this->erreur(409, 'TELEPHONE_DEJA_UTILISE', $this->api('POST', '/api/v1/moi/telephone', ['telephone' => $autre->getTelephone(), 'code' => '123456'], $user));
+        $this->erreur(422, 'OTP_EXPIRE', $this->api('POST', '/api/v1/moi/telephone', ['telephone' => $autre->getTelephone(), 'code' => '123456'], $user));
+        $this->ok(202, $this->api('POST', '/api/v1/auth/otp', ['telephone' => $autre->getTelephone()]));
+        $sms = static::getContainer()->get(SmsEnvoyeurInterface::class)->dernierPour($autre->getTelephone());
+        preg_match('/\b(\d{6})\b/', $sms, $m);
+        $this->erreur(409, 'TELEPHONE_DEJA_UTILISE', $this->api('POST', '/api/v1/moi/telephone', ['telephone' => $autre->getTelephone(), 'code' => $m[1]], $user));
         self::assertSame($avant, $this->em()->find(User::class, $user->getId())->getTelephone());
         self::assertSame(2, $this->em()->getRepository(User::class)->count([]));
     }

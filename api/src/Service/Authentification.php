@@ -116,7 +116,7 @@ final class Authentification
         $parrain = null;
         if (null !== $codeParrain && '' !== trim($codeParrain)) {
             $parrain = $this->em->getRepository(User::class)->findOneBy(['codeParrainage' => strtoupper(trim($codeParrain))]);
-            if (null === $parrain || !$parrain->isActif()) {
+            if (null === $parrain || !$parrain->isActif() || !$parrain->isTelephoneVerifie() || $parrain->getId() === $user?->getId()) {
                 throw ErreurMetier::champ('codeParrain', 'CODE_PARRAIN_INCONNU', 'Code parrain inconnu.');
             }
         }
@@ -175,12 +175,13 @@ final class Authentification
     public function changerTelephone(User $user, string $saisie, string $code): void
     {
         $telephone = $this->normaliser($saisie);
+        // Vérifier l'OTP avant de révéler si le numéro appartient à une autre identité.
+        // Hors transaction de correction : les tentatives incorrectes doivent rester comptées.
+        $this->verifierOtp($telephone, $code);
         $existant = $this->utilisateurParTelephone($telephone);
         if (null !== $existant && $existant->getId() !== $user->getId()) {
             throw new ErreurMetier('TELEPHONE_DEJA_UTILISE', 'Ce numéro est déjà associé à un autre compte.', 409);
         }
-        // Hors transaction de correction : une tentative OTP incorrecte doit rester comptée.
-        $this->verifierOtp($telephone, $code);
         $this->em->wrapInTransaction(function () use ($user, $telephone): void {
             $empreinte = $this->chiffreur->empreinte($telephone);
             $contacts = $this->em->getRepository(\App\Entity\Contact::class)->findBy(['utilisateur' => $user], ['id' => 'ASC']);

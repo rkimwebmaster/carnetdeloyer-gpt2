@@ -37,9 +37,11 @@ void main() {
   testWidgets('R-182 : refus explicite et nettoyage du cache du locataire uniquement', (tester) async {
     var refuse = false;
     final serveur = FauxServeur((o, corps) async {
-      if (o.path == '/locataire/rattachements') return (200, refuse ? [] : [
-        {'contactId': 7, 'bailleur': 'Bailleur', 'contrats': [{'id': 1, 'unite': 'U1', 'propriete': 'Immeuble'}]},
-      ]);
+      if (o.path == '/locataire/rattachements') {
+        return (200, refuse ? [] : [
+          {'contactId': 7, 'bailleur': 'Bailleur', 'contrats': [{'id': 1, 'unite': 'U1', 'propriete': 'Immeuble'}]},
+        ]);
+      }
       if (o.path == '/locataire/contrats') return (200, {'elements': [], 'total': 0});
       if (o.path == '/locataire/contrats/1/refus') {
         refuse = true;

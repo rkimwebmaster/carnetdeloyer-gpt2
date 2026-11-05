@@ -32,7 +32,7 @@ Si la base est déjà remplie mais n'a aucun historique de migrations, ne pas ma
 
 ## Vérifications
 
-- Suite PHP locale sur SQLite : 130 tests et 1071 assertions réussis. La CI vérifie aussi MariaDB et la migration réelle.
+- Suite PHP locale sur SQLite : 130 tests et 1080 assertions réussis. La CI vérifie aussi MariaDB et la migration réelle.
 - Nouveaux tests d'API : compte provisoire, inscription sur la même identité, confirmation individuelle, refus et isolation, correction avant confirmation, droits d'un autre compte, changement de téléphone par OTP et interdiction de fusion.
 - Test MariaDB dédié : reprise d'un compte et de deux confirmations historiques, contrat non confirmé conservé privé, aucun enregistrement supprimé et nouveaux comptes non vérifiés par défaut.
 - Tests Flutter : choix d'un seul contrat, refus avec confirmation et purge du cache limitée à l'utilisateur, changement de numéro depuis Profil.

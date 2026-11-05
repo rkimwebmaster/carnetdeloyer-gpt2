@@ -30,10 +30,20 @@ foreach (["Bailleur intégration", "Locataire intégration"] as $i => $nom) {
 echo $sortie[0], " ", $sortie[1], " ", $dernierTel, "\n";
 ')
 
-APP_ENV=test php -d variables_order=EGPCS -S 127.0.0.1:$PORT -t public >/tmp/cdl-integration.log 2>&1 &
+export APP_DEBUG=0
+php bin/console cache:warmup --env=test --no-debug -q
+APP_ENV=test php -d variables_order=EGPCS -d opcache.enable_cli=0 -d opcache.jit=0 -S 127.0.0.1:$PORT -t public >/tmp/cdl-integration.log 2>&1 &
 SERVEUR=$!
-trap 'kill $SERVEUR 2>/dev/null' EXIT
-sleep 2
+trap 'resultat=$?; kill "$SERVEUR" 2>/dev/null || true; if [ "$resultat" -ne 0 ]; then tail -40 /tmp/cdl-integration.log; fi' EXIT
+PRET=0
+for _ in $(seq 1 30); do
+  if curl -fs -o /dev/null "http://127.0.0.1:$PORT/api/v1/referentiels/devises"; then PRET=1; break; fi
+  sleep 1
+done
+if [ "$PRET" -ne 1 ]; then
+  echo "L'API n'est pas prête : le test d'intégration n'a pas été lancé." >&2
+  exit 1
+fi
 
 cd "$RACINE/mobile"
 CDL_API_URL="http://127.0.0.1:$PORT" CDL_JETON="$JETON" CDL_JETON_LOCATAIRE="$JETON_L" CDL_TEL_LOCATAIRE="$TEL_L" \
