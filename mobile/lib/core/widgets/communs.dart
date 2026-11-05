@@ -88,7 +88,7 @@ class PastilleStatut extends StatelessWidget {
     final couleur = ThemeCdl.statut(statut, Theme.of(context).colorScheme);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: couleur.withValues(alpha: .12), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: ThemeCdl.fondStatut(statut, Theme.of(context).colorScheme), borderRadius: BorderRadius.circular(12)),
       child: Text(libelle, style: TextStyle(color: couleur, fontWeight: FontWeight.w600, fontSize: 12)),
     );
   }

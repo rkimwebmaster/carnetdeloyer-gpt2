@@ -3,6 +3,8 @@
 namespace App\Tests\Api;
 
 use App\Entity\Devise;
+use App\Entity\PaysApi;
+use App\Entity\VilleApi;
 use App\Tests\ApiTestCase;
 
 final class ReferentielTest extends ApiTestCase
@@ -42,5 +44,31 @@ final class ReferentielTest extends ApiTestCase
     public function testRouteProtegeeExigeUneSession(): void
     {
         $this->erreur(401, 'SESSION', $this->api('GET', '/api/v1/moi'));
+    }
+
+    /** R-15, R-117 : désactiver un pays masque aussi ses villes, sans effacer l'historique. */
+    public function testPaysDesactiveMasqueSesVillesSansSuppression(): void
+    {
+        $rdc = $this->em()->getRepository(PaysApi::class)->findOneBy(['codeIso' => 'CD']);
+        $id = $rdc->getId();
+        $nombre = $this->em()->getRepository(VilleApi::class)->count(['pays' => $rdc]);
+        $rdc->setActive(false);
+        $this->em()->flush();
+
+        $pays = $this->ok(200, $this->api('GET', '/api/v1/referentiels/pays'));
+        self::assertNotContains('CD', array_column($pays, 'codeIso'));
+        self::assertSame([], $this->ok(200, $this->api('GET', '/api/v1/referentiels/pays/'.$id.'/villes')));
+        self::assertSame($nombre, $this->em()->getRepository(VilleApi::class)->count(['pays' => $this->em()->find(PaysApi::class, $id)]));
+    }
+
+    public function testVilleDesactiveeMasqueeSansMasquerSonPays(): void
+    {
+        $ville = $this->em()->getRepository(VilleApi::class)->findOneBy(['nom' => 'Lubumbashi']);
+        $paysId = $ville->getPays()->getId();
+        $ville->setActive(false);
+        $this->em()->flush();
+
+        self::assertSame([], $this->ok(200, $this->api('GET', '/api/v1/referentiels/pays/'.$paysId.'/villes?q=Lubum')));
+        self::assertContains('CD', array_column($this->ok(200, $this->api('GET', '/api/v1/referentiels/pays')), 'codeIso'));
     }
 }

@@ -73,6 +73,29 @@ final class ReferentielsSchemaTest extends TestCase
         self::assertFalse($db->createSchemaManager()->tablesExist(['villes']));
     }
 
+    public function testIndexUniqueAbsentEstSignale(): void
+    {
+        $manager = $this->em->getConnection()->createSchemaManager();
+        foreach ($manager->introspectTable('devise')->getIndexes() as $index) {
+            if ($index->isUnique() && !$index->isPrimary()) {
+                $manager->dropIndex($index->getName(), 'devise');
+            }
+        }
+        self::assertSame(Command::FAILURE, $this->commande->execute(['--verifier-schema' => true]));
+        self::assertStringContainsString('Index ou clés étrangères différents', $this->commande->getDisplay());
+    }
+
+    public function testAncienneSuppressionEnCascadeEstSignalee(): void
+    {
+        $db = $this->em->getConnection();
+        $db->executeStatement('DROP TABLE villes');
+        $db->executeStatement('CREATE TABLE villes (id INTEGER PRIMARY KEY AUTOINCREMENT, nom VARCHAR(150) NOT NULL, active BOOLEAN NOT NULL, pays_id INTEGER NOT NULL, CONSTRAINT ancienne_fk FOREIGN KEY (pays_id) REFERENCES pays (id) ON DELETE CASCADE)');
+        $db->executeStatement('CREATE UNIQUE INDEX unique_ville_pays ON villes (pays_id, nom)');
+        self::assertSame(Command::FAILURE, $this->commande->execute(['--verifier-schema' => true]));
+        self::assertStringContainsString('Index ou clés étrangères différents', $this->commande->getDisplay());
+        self::assertSame('CASCADE', array_values($db->createSchemaManager()->introspectTable('villes')->getForeignKeys())[0]->getOnDeleteAction()->value);
+    }
+
     public function testChargementIdempotentPreserveLesDonneesExistantes(): void
     {
         $usd = new Devise('USD', 'Nom personnalisé', 'US$', 2);
