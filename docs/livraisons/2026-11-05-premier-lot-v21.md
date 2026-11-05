@@ -13,7 +13,8 @@
 - Exécuté localement : Composer install et validate ; 123 tests PHP, 930 assertions sur SQLite. SQLite vérifie les parcours mais ne remplace pas la validation des migrations MySQL ni les tests de concurrence.
 - Première exécution GitHub Actions (commit dfbe04a) : API PHP 8.2/MariaDB et Flutter réussis. Cette exécution précède les tests supplémentaires et le changement de thème ; vérifier la dernière exécution pour ces ajouts.
 - Le SDK Flutter n'est pas disponible localement : les contrôles Flutter s'exécutent dans GitHub Actions.
-- Pas de validation visuelle sur téléphone réel ni de test de concurrence exécuté dans ce lot.
+- La CI exécute aussi 30 requêtes concurrentes (20 paiements distincts et 10 rejouant la même clé), ainsi que le parcours Flutter contre l'API réelle. Consulter la dernière exécution : une ancienne exécution réussie ne valide pas les modifications ultérieures.
+- Pas de validation visuelle sur téléphone réel dans ce lot. Le serveur de concurrence transmet explicitement les variables d'environnement et désactive OPCache/JIT pour ses workers CLI ; le conteneur Symfony est préchauffé avant le test.
 
 ## Base locale existante
 

@@ -130,6 +130,8 @@ Espacements (proposition, à valider) : échelle 4 · 8 · 12 · 16 · 24 · 32 
 
 Règle de mode sombre : la primaire passe en `primaryLight` pour les fonds pleins, et **l'ambre devient la couleur d'accent** (contours, liens, onglet actif, chargement), car le bordeaux n'est pas lisible sur fond sombre.
 
+Accessibilité des pastilles : en mode sombre, le texte des retards utilise `#FF8A80` sur le fond teinté. Le rouge `#EF5350` reste la couleur d'erreur du thème ; sur une pastille à 12 %, son contraste de texte est inférieur à 4,5:1.
+
 ## 6. Icônes de catégorie (R-83, R-117)
 
 L'icône de catégorie est le repère principal des listes : les photos sont secondaires.
