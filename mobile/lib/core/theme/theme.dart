@@ -139,7 +139,7 @@ class ThemeCdl {
     final sombre = schema.brightness == Brightness.dark;
     return switch (statut) {
         'payee' => sombre ? const Color(0xFF81C784) : const Color(0xFF256628),
-        'en_retard' => schema.error,
+        'en_retard' => sombre ? const Color(0xFFFF8A80) : schema.error,
         'partielle' => sombre ? ambre : texte,
         'a_venir' => sombre ? const Color(0xFF90CAF9) : information,
         _ => schema.onSurfaceVariant,
