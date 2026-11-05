@@ -21,7 +21,11 @@ echo $c->get("lexik_jwt_authentication.jwt_manager")->create($u);
 ')
 
 JOURNAL=$(mktemp)
-PHP_CLI_SERVER_WORKERS=8 php -S 127.0.0.1:$PORT -t public >"$JOURNAL" 2>&1 &
+# Les workers forkent le serveur CLI : ne pas partager son cache OPCache/JIT.
+# Préparer aussi le conteneur Symfony avant les requêtes parallèles.
+export APP_DEBUG=0
+php bin/console cache:warmup --env=dev --no-debug -q
+PHP_CLI_SERVER_WORKERS=8 php -d variables_order=EGPCS -d opcache.enable_cli=0 -d opcache.jit=0 -S 127.0.0.1:$PORT -t public >"$JOURNAL" 2>&1 &
 SERVEUR=$!
 # En cas d'échec, afficher le journal du serveur pour le diagnostic.
 diagnostic() {
@@ -32,7 +36,15 @@ diagnostic() {
   fi
 }
 trap 'code=$?; kill $SERVEUR 2>/dev/null; if [ $code -ne 0 ]; then diagnostic; fi' EXIT
-for _ in $(seq 1 30); do curl -s -o /dev/null "$URL/api/v1/referentiels/devises" && break; sleep 1; done
+PRET=0
+for _ in $(seq 1 30); do
+  if curl -fs -o /dev/null "$URL/api/v1/referentiels/devises"; then PRET=1; break; fi
+  sleep 1
+done
+if [ "$PRET" -ne 1 ]; then
+  echo "L'API n'est pas prête : le test de concurrence n'a pas été lancé." >&2
+  exit 1
+fi
 
 H="Authorization: Bearer $TOKEN"; J="Content-Type: application/json"
 UNITE=$(curl -sf -H "$H" -H "$J" -d '{"nom":"Concurrence","type":"simple","paysId":1,"categorie":"maison"}' "$URL/api/v1/proprietes" | php -r 'echo json_decode(stream_get_contents(STDIN), true)["unites"][0]["id"];')

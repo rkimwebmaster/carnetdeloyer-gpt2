@@ -89,7 +89,7 @@ class EcranAccueilBailleur extends ConsumerWidget {
                 Card(
                   child: ListTile(
                     title: Text(l.accueilEnRetard),
-                    subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: (t['enRetard'] as List).isEmpty ? [Text(l.contratAJour)] : montants(t['enRetard'] as List, ThemeCdl.retard)),
+                    subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: (t['enRetard'] as List).isEmpty ? [Text(l.contratAJour)] : montants(t['enRetard'] as List, ThemeCdl.statut('en_retard', Theme.of(context).colorScheme))),
                     trailing: Text('${t['contratsEnRetard']}'),
                   ),
                 ),

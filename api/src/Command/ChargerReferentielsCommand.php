@@ -7,9 +7,11 @@ use App\Entity\Devise;
 use App\Entity\PaysApi;
 use App\Entity\VilleApi;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -80,8 +82,22 @@ final class ChargerReferentielsCommand extends Command
         parent::__construct();
     }
 
+    protected function configure(): void
+    {
+        $this->addOption('verifier-schema', null, InputOption::VALUE_NONE, 'Compare pays, villes et devise aux mappings sans modifier la base (R-15).');
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        // R-15 : ne jamais amorcer une base historique dont la structure diffère.
+        if (!$this->verifierSchema($output)) {
+            return Command::FAILURE;
+        }
+        if ($input->getOption('verifier-schema')) {
+            $output->writeln('Référentiels : structure conforme aux mappings. Aucune écriture effectuée.');
+
+            return Command::SUCCESS;
+        }
         $devises = [];
         foreach (self::DEVISES as $code => [$nom, $symbole, $decimales]) {
             $devises[$code] = $this->em->getRepository(Devise::class)->findOneBy(['code' => $code]) ?? $this->persister(new Devise($code, $nom, $symbole, $decimales));
@@ -103,6 +119,48 @@ final class ChargerReferentielsCommand extends Command
         $output->writeln('Référentiels chargés.');
 
         return Command::SUCCESS;
+    }
+
+    /** Contrôle de structure uniquement : aucune migration ni correction automatique. */
+    private function verifierSchema(OutputInterface $output): bool
+    {
+        $classes = [Devise::class, PaysApi::class, VilleApi::class];
+        $metadata = array_map($this->em->getClassMetadata(...), $classes);
+        $attendu = (new SchemaTool($this->em))->getSchemaFromMetadata($metadata);
+        $manager = $this->em->getConnection()->createSchemaManager();
+        $comparateur = $manager->createComparator();
+        $conforme = true;
+        foreach ($attendu->getTables() as $table) {
+            $nom = $table->getName();
+            if (!$manager->tablesExist([$nom])) {
+                $output->writeln(sprintf('<error>%s : table absente.</error>', $nom));
+                $conforme = false;
+                continue;
+            }
+            $diff = $comparateur->compareTables($manager->introspectTable($nom), $table);
+            if ($diff->isEmpty()) {
+                continue;
+            }
+            $conforme = false;
+            $output->writeln(sprintf('<error>%s : structure différente.</error>', $nom));
+            foreach ($diff->getAddedColumns() as $colonne) {
+                $output->writeln('  Colonne attendue absente : '.$colonne->getName());
+            }
+            foreach ($diff->getChangedColumns() as $colonne) {
+                $output->writeln('  Colonne à comparer : '.$colonne->getOldColumn()->getName().' → '.$colonne->getNewColumn()->getName());
+            }
+            foreach ($diff->getDroppedColumns() as $colonne) {
+                $output->writeln('  Colonne historique à préserver : '.$colonne->getName());
+            }
+            if ($diff->getAddedIndexes() || $diff->getDroppedIndexes() || $diff->getAddedForeignKeys() || $diff->getDroppedForeignKeys()) {
+                $output->writeln('  Index ou clés étrangères différents : comparer le schéma avant migration.');
+            }
+        }
+        if (!$conforme) {
+            $output->writeln('<error>Chargement interrompu. Aucune écriture effectuée. Préparer et vérifier une migration de reprise ; ne pas utiliser schema:update --force.</error>');
+        }
+
+        return $conforme;
     }
 
     /**

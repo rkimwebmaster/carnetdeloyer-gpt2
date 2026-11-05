@@ -95,7 +95,7 @@ class _CarteAbonnement extends ConsumerWidget {
             subtitle: Text([
               libelleEtat(l, etat),
               if (unite.abonnement.fin != null) l.abonnementJusquAu(Format.date(unite.abonnement.fin!)),
-            ].join(' · '), style: TextStyle(color: alerte ? ThemeCdl.retard : null)),
+            ].join(' · '), style: TextStyle(color: alerte ? ThemeCdl.statut('en_retard', Theme.of(context).colorScheme) : null)),
           ),
           if (devis != null) ...[
             Text(l.abonnementMontant(Format.montant(devis['montantUsd'] as int, 'USD'), '${devis['pourcentage']}')),

@@ -19,6 +19,7 @@ La version du cahier des charges (v2.1) est distincte des étapes de livraison d
 cd api
 composer install
 # Base locale : DATABASE_URL dans .env.local (MySQL 8 ou MariaDB 10.11)
+php bin/console app:referentiels:charger --verifier-schema # base existante : contrôle en lecture seule avant toute migration
 php bin/console lexik:jwt:generate-keypair
 php bin/console doctrine:database:create
 php bin/console doctrine:migrations:migrate
@@ -55,6 +56,10 @@ flutter run --dart-define=CDL_API_URL=http://192.168.1.10:8000   # téléphone r
 
 ## Tests
 
+GitHub Actions exécute les tests API sous PHP 8.2 avec une base MariaDB jetable,
+ainsi que l’analyse et les tests Flutter, à chaque push et pull request.
+Un workflow présent ne prouve pas qu’une exécution est réussie : consulter ses résultats.
+
 | Commande | Couvre |
 |---|---|
 | `cd api && php vendor/bin/phpunit` | Suite API : unitaires (argent en entiers, calendrier, chiffrement, filtre de coordonnées) et fonctionnels sur base réelle (chaque test isolé en transaction) |
@@ -88,7 +93,7 @@ Revue documentaire et ciblée du code le 5 novembre 2026 ; ce relevé n’est pa
 1. **Référentiels avant migration (R-15 à R-18)** : les mappings du dépôt utilisent `pays`, `villes` et `devise`. Comparer colonnes, types, index et relations à la base réellement utilisée sur le PC ; les noms de tables seuls ne prouvent pas la compatibilité. Ne pas lancer de migration sur cette base avant cette comparaison.
 2. **Contrats (R-175, R-176, R-179, R-177, R-178)** : `Contrat` ne possède pas encore de périodicité ni de jour de paiement dédié. Prévoir les proratas et le renouvellement avec approbation, en protégeant les paiements existants.
 3. **Garantie et sortie (R-30, R-37)** : les champs restent intégrés à `Contrat`. Les entités séparées, les versements multiples et le prorata automatique de sortie restent à implémenter ; `Contrats::cloturer` accepte actuellement un ajustement manuel.
-4. **Identité visuelle** : `mobile/lib/core/theme/theme.dart` utilise encore le vert ; l’aligner sur le bordeaux et l’ambre de la charte, sans changer les fonctionnalités.
+4. **Identité visuelle** : thème commun bordeaux et ambre, modes clair et sombre, boutons de 50 px et pastilles accessibles. Les couleurs de statut des écrans s'adaptent au mode. La validation visuelle sur appareils reste à effectuer.
 5. **Autres parcours à auditer** : compte locataire non vérifié, refus et confirmation (R-19, R-72, R-182), preuves privées (R-180), historique des abonnements (R-183), rappels et SMS payants (R-181, R-184, R-185), cache mixte (R-186, R-187), rôles territoriaux et site vitrine (R-188, R-189).
 
 Tests à exécuter pour les futurs changements métier : création et confirmation du contrat, jour de paiement et proratas, renouvellement, garantie et clôture, non-régression des paiements/reçus, idempotence et accès par territoire. Les commandes ci-dessus sont des instructions ; leurs résultats ne sont pas attestés par cette revue documentaire.

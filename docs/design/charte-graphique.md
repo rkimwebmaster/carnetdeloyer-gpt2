@@ -130,6 +130,8 @@ Espacements (proposition, à valider) : échelle 4 · 8 · 12 · 16 · 24 · 32 
 
 Règle de mode sombre : la primaire passe en `primaryLight` pour les fonds pleins, et **l'ambre devient la couleur d'accent** (contours, liens, onglet actif, chargement), car le bordeaux n'est pas lisible sur fond sombre.
 
+Accessibilité des pastilles : en mode sombre, le texte des retards utilise `#FF8A80` sur le fond teinté. Le rouge `#EF5350` reste la couleur d'erreur du thème ; sur une pastille à 12 %, son contraste de texte est inférieur à 4,5:1.
+
 ## 6. Icônes de catégorie (R-83, R-117)
 
 L'icône de catégorie est le repère principal des listes : les photos sont secondaires.
@@ -142,7 +144,7 @@ L'icône de catégorie est le repère principal des listes : les photos sont sec
 
 ## 7. Écarts à corriger dans le code
 
-1. **Thème actuel du dépôt** : `mobile/lib/core/theme/theme.dart` utilise un vert (`#1F6F5C`) et ses propres couleurs de statut. À remplacer par ce thème.
+1. **Thème commun aligné le 5 novembre 2026** : `mobile/lib/core/theme/theme.dart` utilise le bordeaux et l'ambre. Les pastilles et les écrans adaptent le texte de statut au mode ; le vert du texte « Payée » est assombri à `#256628` en mode clair pour atteindre 4,5:1 sur son fond teinté. La validation visuelle sur appareils reste à effectuer.
 2. **`withOpacity` est déprécié** depuis Flutter 3.27 : utiliser `withValues(alpha: 0.12)`.
 3. **Mode sombre incomplet** : il manque `labelLarge`, l'icône de la barre d'app, `focusedErrorBorder`, l'interrupteur, la case à cocher et l'info-bulle. À compléter sur le modèle du mode clair.
 4. **Bordure de focus du mode sombre** : `primaryLight` sur fond sombre (2,5:1) est sous le seuil de 3:1. Proposition : ambre.
