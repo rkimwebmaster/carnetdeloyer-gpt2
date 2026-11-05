@@ -4,12 +4,14 @@ namespace App\Controller\Api;
 
 use App\Api\Dto\ModificationProfil;
 use App\Api\Dto\ProfilEntreprise;
+use App\Api\Dto\VerificationOtp;
 use App\Api\ErreurMetier;
 use App\Api\Presentateur;
 use App\Entity\PaysApi;
 use App\Entity\VilleApi;
 use App\Enum\ModeUtilisateur;
 use App\Service\Espaces;
+use App\Service\Authentification;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -29,6 +31,15 @@ final class MoiController extends ApiController
     public function profil(): JsonResponse
     {
         $moi = $this->moi();
+
+        return $this->json($this->p->utilisateur($moi, $this->espaces->de($moi)));
+    }
+
+    #[Route('/telephone', methods: ['POST'])]
+    public function changerTelephone(#[MapRequestPayload] VerificationOtp $dto, Authentification $auth): JsonResponse
+    {
+        $moi = $this->moi();
+        $auth->changerTelephone($moi, $dto->telephone, $dto->code);
 
         return $this->json($this->p->utilisateur($moi, $this->espaces->de($moi)));
     }
@@ -78,7 +89,7 @@ final class MoiController extends ApiController
         $contratsBailleur = null === $espace ? [] : $this->em->createQueryBuilder()->select('c')->from(\App\Entity\Contrat::class, 'c')
             ->join('c.unite', 'u')->join('u.propriete', 'p')->where('p.espace = :e')->setParameter('e', $espace)->getQuery()->getResult();
         $contratsLocataire = $this->em->createQueryBuilder()->select('c')->from(\App\Entity\Contrat::class, 'c')
-            ->join('c.locataire', 'l')->where('l.utilisateur = :u')->setParameter('u', $moi)->getQuery()->getResult();
+            ->join('c.locataire', 'l')->where('l.utilisateur = :u AND c.locataireConfirmeLe IS NOT NULL AND c.locataireRefuseLe IS NULL')->setParameter('u', $moi)->getQuery()->getResult();
         $detail = fn (\App\Entity\Contrat $c) => $this->p->contratDetail($c, $this->em->getRepository(\App\Entity\Paiement::class)->findBy(['contrat' => $c], ['datePaiement' => 'ASC']));
 
         $reponse = $this->json([

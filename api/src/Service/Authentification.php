@@ -77,11 +77,13 @@ final class Authentification
 
         $user = $this->utilisateurParTelephone($telephone);
         $jeton = null;
-        if (null === $user) {
+        if (null !== $user && !$user->isActif()) {
+            throw new ErreurMetier('COMPTE_SUSPENDU', 'Ce compte est suspendu.', 403);
+        }
+        if (null === $user || !$user->isTelephoneVerifie()) {
             $jeton = bin2hex(random_bytes(32));
             $otp->emettreJetonInscription(hash('sha256', $jeton), $maintenant->modify(\sprintf('+%d minutes', self::JETON_INSCRIPTION_MINUTES)));
-        } elseif (!$user->isActif()) {
-            throw new ErreurMetier('COMPTE_SUSPENDU', 'Ce compte est suspendu.', 403);
+            $user = null; // Compléter le nom et le parrain avant d'ouvrir une session.
         }
         $this->em->flush();
 
@@ -99,8 +101,12 @@ final class Authentification
         if (null === $otp || $otp->getTelephoneEmpreinte() !== $empreinte || $otp->getJetonExpireLe() < $this->clock->now()) {
             throw new ErreurMetier('JETON_INSCRIPTION_INVALIDE', 'Session d\'inscription expirée : recommencez.', 422);
         }
-        if (null !== $this->utilisateurParTelephone($telephone)) {
+        $user = $this->utilisateurParTelephone($telephone);
+        if (null !== $user && $user->isTelephoneVerifie()) {
             throw new ErreurMetier('COMPTE_EXISTANT', 'Un compte existe déjà avec ce numéro.', 409);
+        }
+        if (null !== $user && !$user->isActif()) {
+            throw new ErreurMetier('COMPTE_SUSPENDU', 'Ce compte est suspendu.', 403);
         }
         $nom = trim($nom);
         if (mb_strlen($nom) < 2 || mb_strlen($nom) > 120) {
@@ -110,14 +116,16 @@ final class Authentification
         $parrain = null;
         if (null !== $codeParrain && '' !== trim($codeParrain)) {
             $parrain = $this->em->getRepository(User::class)->findOneBy(['codeParrainage' => strtoupper(trim($codeParrain))]);
-            if (null === $parrain || !$parrain->isActif()) {
+            if (null === $parrain || !$parrain->isActif() || !$parrain->isTelephoneVerifie() || $parrain->getId() === $user?->getId()) {
                 throw ErreurMetier::champ('codeParrain', 'CODE_PARRAIN_INCONNU', 'Code parrain inconnu.');
             }
         }
 
-        $user = new User($telephone, $empreinte, $nom, $this->nouveauCodeParrainage());
+        $user ??= new User($telephone, $empreinte, $nom, $this->nouveauCodeParrainage());
+        $user->setNom($nom);
         $user->setParrain($parrain);
         $user->setPays($this->paysDepuisTelephone($telephone));
+        $user->verifierTelephone();
         $otp->consommerJeton();
         $this->em->persist($user);
         $this->em->flush();
@@ -130,6 +138,9 @@ final class Authentification
      */
     public function jetons(User $user): array
     {
+        if (!$user->isTelephoneVerifie()) {
+            throw new ErreurMetier('TELEPHONE_NON_VERIFIE', 'Vérifiez votre téléphone par OTP.', 403);
+        }
         $refresh = $this->refreshGenerateur->createForUserWithTtl($user, self::REFRESH_TTL);
         $this->refreshManager->save($refresh);
 
@@ -143,6 +154,48 @@ final class Authentification
     public function utilisateurParTelephone(string $telephone): ?User
     {
         return $this->em->getRepository(User::class)->findOneBy(['telephoneEmpreinte' => $this->chiffreur->empreinte($telephone)]);
+    }
+
+    /** R-19 : identité provisoire, sans session ni inscription automatique. */
+    public function obtenirCompteLocataire(string $telephone, string $nom): User
+    {
+        $telephone = $this->normaliser($telephone);
+        $user = $this->utilisateurParTelephone($telephone);
+        if (null !== $user) {
+            return $user;
+        }
+        $user = new User($telephone, $this->chiffreur->empreinte($telephone), $nom, $this->nouveauCodeParrainage());
+        $user->setPays($this->paysDepuisTelephone($telephone));
+        $this->em->persist($user);
+
+        return $user;
+    }
+
+    /** R-72 : seul le titulaire vérifie son nouveau numéro ; son identité reste inchangée. */
+    public function changerTelephone(User $user, string $saisie, string $code): void
+    {
+        $telephone = $this->normaliser($saisie);
+        // Vérifier l'OTP avant de révéler si le numéro appartient à une autre identité.
+        // Hors transaction de correction : les tentatives incorrectes doivent rester comptées.
+        $this->verifierOtp($telephone, $code);
+        $existant = $this->utilisateurParTelephone($telephone);
+        if (null !== $existant && $existant->getId() !== $user->getId()) {
+            throw new ErreurMetier('TELEPHONE_DEJA_UTILISE', 'Ce numéro est déjà associé à un autre compte.', 409);
+        }
+        $this->em->wrapInTransaction(function () use ($user, $telephone): void {
+            $empreinte = $this->chiffreur->empreinte($telephone);
+            $contacts = $this->em->getRepository(\App\Entity\Contact::class)->findBy(['utilisateur' => $user], ['id' => 'ASC']);
+            foreach ($contacts as $contact) {
+                $this->em->lock($contact, \Doctrine\DBAL\LockMode::PESSIMISTIC_WRITE);
+                $this->em->refresh($contact);
+                if ($contact->getUtilisateur()?->getId() !== $user->getId()) {
+                    continue;
+                }
+                $contact->changerTelephone($telephone, $empreinte);
+                $contact->rattacher($user);
+            }
+            $user->changerTelephoneVerifie($telephone, $empreinte);
+        });
     }
 
     /**

@@ -21,6 +21,8 @@ final class Activites
     public const DECLARATION_RELANCE = 'declaration_relance';
     public const CONTRAT_CREE = 'contrat_cree';
     public const CONTRAT_CLOTURE = 'contrat_cloture';
+    public const CONTRAT_CONFIRME = 'contrat_confirme';
+    public const CONTRAT_REFUSE = 'contrat_refuse';
     public const ABONNEMENT_PAYE = 'abonnement_paye';
     public const ABONNEMENT_GRATUIT = 'abonnement_gratuit';
     public const ABONNEMENT_EXPIRE_BIENTOT = 'abonnement_expire_bientot';

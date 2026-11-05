@@ -66,6 +66,14 @@ class Contrat
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $clotureLe = null;
 
+    /** R-72 : la confirmation porte sur ce contrat, jamais sur tous les contrats du Contact. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $locataireConfirmeLe = null;
+
+    /** R-182 : le refus retire l'accès ; il ne clôture ni n'efface le contrat. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $locataireRefuseLe = null;
+
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
     private User $creePar;
@@ -97,6 +105,24 @@ class Contrat
     public function isActif(): bool { return StatutContrat::Actif === $this->statut; }
     public function getCreePar(): User { return $this->creePar; }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
+    public function getLocataireConfirmeLe(): ?\DateTimeImmutable { return $this->locataireConfirmeLe; }
+    public function getLocataireRefuseLe(): ?\DateTimeImmutable { return $this->locataireRefuseLe; }
+    public function confirmerLocataire(): void { $this->locataireConfirmeLe ??= now(); }
+    public function refuserLocataire(): void { $this->locataireRefuseLe ??= now(); }
+    public function reinitialiserRefusLocataire(): void
+    {
+        if (null !== $this->locataireConfirmeLe) {
+            throw new \LogicException('Un numéro confirmé ne peut plus être corrigé par le bailleur.');
+        }
+        $this->locataireRefuseLe = null;
+    }
+
+    public function estAccessibleParLocataire(User $user): bool
+    {
+        return $user->isTelephoneVerifie() && null !== $this->locataireConfirmeLe
+            && null === $this->locataireRefuseLe && null !== $user->getId()
+            && $this->locataire->getUtilisateur()?->getId() === $user->getId();
+    }
 
     public function getGarantieMontant(): int { return $this->garantieMontant; }
     public function getGarantieStatut(): StatutGarantie { return $this->garantieStatut; }

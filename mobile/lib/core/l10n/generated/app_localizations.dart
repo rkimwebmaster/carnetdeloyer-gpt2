@@ -982,6 +982,19 @@ abstract class AppLocalizations {
   /// **'Rattacher'**
   String get locationsRattacher;
 
+  String get locationsRefuser;
+  String get profilChangerTelephone;
+  String get profilTelephoneAide;
+  String get profilEnvoyerCode;
+  String get profilCodeEnvoye;
+  String get erreurTELEPHONE_DEJA_UTILISE;
+  String activiteContratConfirme(String unite);
+  String activiteContratRefuse(String unite);
+  String get locationsRefusAide;
+  String get erreurLOCATAIRE_CONFIRME;
+  String get erreurTELEPHONE_NON_VERIFIE;
+  String get erreurCONFIRMATION_PAR_CONTRAT_REQUISE;
+
   /// No description provided for @locationsARattacher.
   ///
   /// In fr, this message translates to:

@@ -21,7 +21,7 @@ final activitesProvider = FutureProvider.autoDispose.family<List<Map<String, dyn
 });
 
 /// R-173 : texte d'une activité, traduit côté app à partir du code et des paramètres.
-String texteActivite(Map<String, dynamic> a) {
+String texteActivite(Map<String, dynamic> a, AppLocalizations l) {
   final p = (a['parametres'] as Map?) ?? const {};
   String m() => p['montant'] is int && p['devise'] is String ? Format.montant(p['montant'] as int, p['devise'] as String) : '';
   return switch (a['type']) {
@@ -33,6 +33,8 @@ String texteActivite(Map<String, dynamic> a) {
     'declaration_relance' => 'Rappel : déclaration de ${m()} en attente (${p['locataire'] ?? ''})',
     'contrat_cree' => 'Contrat créé : ${p['unite'] ?? ''} · ${p['locataire'] ?? ''}',
     'contrat_cloture' => 'Contrat clôturé : ${p['unite'] ?? ''}',
+    'contrat_confirme' => l.activiteContratConfirme('${p['unite'] ?? ''}'),
+    'contrat_refuse' => l.activiteContratRefuse('${p['unite'] ?? ''}'),
     'abonnement_paye' => 'Abonnement payé : ${p['unite'] ?? ''}',
     'abonnement_gratuit' => 'Première unité offerte 12 mois : ${p['unite'] ?? ''}',
     'abonnement_expire_bientot' => 'Abonnement de ${p['unite'] ?? ''} : expire dans ${p['jours'] ?? 0} jours',
@@ -141,7 +143,7 @@ class _FilActivite extends ConsumerWidget {
         ListTile(
           dense: true,
           leading: const Icon(Icons.bolt_outlined),
-          title: Text(texteActivite(a)),
+          title: Text(texteActivite(a, l)),
           subtitle: Text(Format.date((a['creeLe'] as String).substring(0, 10))),
         ),
     ]);

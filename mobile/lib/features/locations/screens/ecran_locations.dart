@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/navigation/coquille.dart';
 import '../../../core/outils/format.dart';
+import '../../../core/session/fournisseurs.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/communs.dart';
 import '../../contrats/screens/ecran_contrat.dart';
@@ -18,7 +19,8 @@ class EcranLocations extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
-    final rattachements = ref.watch(rattachementsProvider).value ?? const <Rattachement>[];
+    final attente = ref.watch(rattachementsProvider);
+    final rattachements = attente.value ?? const <Rattachement>[];
     final locations = ref.watch(mesLocationsProvider);
 
     return Scaffold(
@@ -29,17 +31,44 @@ class EcranLocations extends ConsumerWidget {
           ref.invalidate(mesLocationsProvider);
         },
         child: ListView(padding: const EdgeInsets.only(bottom: 32), children: [
+          if (attente.isLoading) const LinearProgressIndicator(),
+          if (attente.hasError) EtatErreur(erreur: attente.error!, reessayer: () => ref.invalidate(rattachementsProvider)),
           if (rattachements.isNotEmpty) ...[
             Padding(padding: const EdgeInsets.fromLTRB(16, 16, 16, 4), child: Text(l.locationsARattacher, style: Theme.of(context).textTheme.titleSmall)),
             for (final r in rattachements)
               Card(
-                child: ListTile(
-                  title: Text(r.bailleur),
-                  subtitle: Text(r.unites.join('\n')),
-                  trailing: FilledButton.tonal(
+                key: ValueKey('rattachement-${r.contratId}'),
+                child: Column(children: [
+                  ListTile(title: Text(r.bailleur), subtitle: Text(r.unites.join('\n'))),
+                  Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 12), child: Row(children: [
+                  Expanded(child: OutlinedButton(
+                    onPressed: () async {
+                      final confirmer = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+                        title: Text(l.locationsRefuser),
+                        content: Text(l.locationsRefusAide),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.actionFermer)),
+                          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l.locationsRefuser)),
+                        ],
+                      ));
+                      if (confirmer != true) return;
+                      try {
+                        await ref.read(locationsServiceProvider).refuser(r.contratId);
+                        ref.invalidate(lecteurProvider);
+                        ref.invalidate(rattachementsProvider);
+                        ref.invalidate(mesLocationsProvider);
+                      } catch (e) {
+                        if (context.mounted) afficherErreur(context, e);
+                      }
+                    },
+                    child: Text(l.locationsRefuser),
+                  )),
+                  const SizedBox(width: 12),
+                  Expanded(child: FilledButton.tonal(
                     onPressed: () async {
                       try {
-                        await ref.read(locationsServiceProvider).rattacher(r.contactId);
+                        await ref.read(locationsServiceProvider).confirmer(r.contratId);
+                        ref.invalidate(lecteurProvider);
                         ref.invalidate(rattachementsProvider);
                         ref.invalidate(mesLocationsProvider);
                       } catch (e) {
@@ -47,8 +76,9 @@ class EcranLocations extends ConsumerWidget {
                       }
                     },
                     child: Text(l.locationsRattacher),
-                  ),
-                ),
+                  )),
+                  ])),
+                ]),
               ),
           ],
           VueAsync(
@@ -56,7 +86,7 @@ class EcranLocations extends ConsumerWidget {
             reessayer: () => ref.invalidate(mesLocationsProvider),
             donnees: (lecture) {
               final liste = lecture.valeur.elements;
-              if (liste.isEmpty && rattachements.isEmpty) return EtatVide(message: l.locationsAucune, icone: Icons.home_outlined);
+              if (liste.isEmpty && rattachements.isEmpty && !attente.hasError && !attente.isLoading) return EtatVide(message: l.locationsAucune, icone: Icons.home_outlined);
               return Column(children: [
                 for (final c in liste)
                   Card(
@@ -124,7 +154,37 @@ class EcranMaLocation extends ConsumerWidget {
     final valeur = ref.watch(maLocationProvider(id)).whenData((lecture) => lecture.valeur);
     final c = valeur.value;
     return Stack(children: [
-      EcranContrat(id: id, vue: valeur),
+      EcranContrat(
+        id: id,
+        vue: valeur,
+        recharger: () => ref.invalidate(maLocationProvider(id)),
+        actions: [
+          if (c != null) IconButton(
+            tooltip: context.l10n.locationsRefuser,
+            icon: const Icon(Icons.report_outlined),
+            onPressed: () async {
+              final l = context.l10n;
+              final ok = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+                title: Text(l.locationsRefuser),
+                content: Text(l.locationsRefusAide),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.actionFermer)),
+                  FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l.locationsRefuser)),
+                ],
+              ));
+              if (ok != true) return;
+              try {
+                await ref.read(locationsServiceProvider).refuser(id);
+                ref.invalidate(lecteurProvider);
+                ref.invalidate(rattachementsProvider);
+                if (context.mounted) context.go('/l/locations');
+              } catch (e) {
+                if (context.mounted) afficherErreur(context, e);
+              }
+            },
+          ),
+        ],
+      ),
       if (c != null && c.statut == 'actif')
         Positioned(
           right: 16,

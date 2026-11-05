@@ -45,12 +45,12 @@ final class DeclarationTest extends ApiTestCase
         $this->erreur(404, 'INTROUVABLE', $this->payer($locataire, $contrat['id'], 100));
     }
 
-    /** R-72 : si le bailleur change le numéro, l'ancien perd l'accès. */
-    public function testChangementDeNumeroRetireLAcces(): void
+    /** R-72 v2.1 : après confirmation, le bailleur ne peut plus changer le numéro. */
+    public function testChangementDeNumeroConfirmeEstInterdit(): void
     {
         [$bailleur, $locataire, $contrat] = $this->bailleurEtLocataireRattache();
-        $this->ok(200, $this->api('PATCH', '/api/v1/contacts/'.$contrat['locataire']['id'], ['telephone' => '+243970999000'], $bailleur));
-        $this->erreur(404, 'INTROUVABLE', $this->api('GET', '/api/v1/locataire/contrats/'.$contrat['id'], null, $locataire));
+        $this->erreur(409, 'LOCATAIRE_CONFIRME', $this->api('PATCH', '/api/v1/contacts/'.$contrat['locataire']['id'], ['telephone' => '+243970999000'], $bailleur));
+        $this->ok(200, $this->api('GET', '/api/v1/locataire/contrats/'.$contrat['id'], null, $locataire));
     }
 
     /** R-39, R-40 : déclaration, sans effet sur le solde avant validation. */
