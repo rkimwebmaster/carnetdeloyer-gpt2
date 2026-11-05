@@ -50,6 +50,13 @@ jobs:
         run: |
           php bin/console app:referentiels:charger --verifier-schema
           php bin/console doctrine:schema:validate
+      - name: Concurrence des encaissements sur une base CI dédiée
+        run: |
+          export APP_ENV=dev
+          php bin/console doctrine:database:create --if-not-exists
+          php bin/console doctrine:migrations:migrate --no-interaction
+          php bin/console app:referentiels:charger
+          bash tests/Concurrence/encaissements-paralleles.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -72,3 +79,38 @@ jobs:
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter analyze
       - run: flutter test
+
+  integration:
+    name: Flutter contre API réelle
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: test-only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      APP_ENV: test
+      DATABASE_URL: mysql://root:test-only@127.0.0.1:3306/cdl_integration_ci?serverVersion=10.11.0-MariaDB&charset=utf8mb4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: ctype, iconv, pdo_mysql, pdo_sqlite, mbstring, intl, dom, xml, xmlwriter
+          coverage: none
+          tools: composer:v2
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: composer install --working-dir=api --no-interaction --prefer-dist
+      - run: flutter pub get
+        working-directory: mobile
+      - run: dart run build_runner build --delete-conflicting-outputs
+        working-directory: mobile
+      - run: bash scripts/test-integration.sh
