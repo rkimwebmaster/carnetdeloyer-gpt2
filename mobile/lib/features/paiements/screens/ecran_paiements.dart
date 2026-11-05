@@ -80,7 +80,7 @@ class _LigneFile extends ConsumerWidget {
     return Card(
       color: rejete ? Theme.of(context).colorScheme.errorContainer : null,
       child: ListTile(
-        leading: Icon(rejete ? Icons.error_outline : Icons.schedule, color: rejete ? ThemeCdl.retard : ThemeCdl.attente),
+        leading: Icon(rejete ? Icons.error_outline : Icons.schedule, color: rejete ? Theme.of(context).colorScheme.onErrorContainer : ThemeCdl.statut('partielle', Theme.of(context).colorScheme)),
         title: Text('${Format.montant(paiement.montant, paiement.devise)} · ${paiement.libelle}'),
         subtitle: Text(rejete ? l.paiementsRejete(paiement.motifRejet ?? '') : l.recuProvisoire),
         trailing: IconButton(

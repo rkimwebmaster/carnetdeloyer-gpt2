@@ -142,7 +142,7 @@ L'icône de catégorie est le repère principal des listes : les photos sont sec
 
 ## 7. Écarts à corriger dans le code
 
-1. **Thème commun aligné le 5 novembre 2026** : `mobile/lib/core/theme/theme.dart` utilise le bordeaux et l'ambre. Les pastilles adaptent le texte au mode ; le vert du texte « Payée » est assombri à `#256628` en mode clair pour atteindre 4,5:1 sur son fond teinté. Les écrans qui utilisent directement les constantes de statut et la validation visuelle sur appareils restent à revoir.
+1. **Thème commun aligné le 5 novembre 2026** : `mobile/lib/core/theme/theme.dart` utilise le bordeaux et l'ambre. Les pastilles et les écrans adaptent le texte de statut au mode ; le vert du texte « Payée » est assombri à `#256628` en mode clair pour atteindre 4,5:1 sur son fond teinté. La validation visuelle sur appareils reste à effectuer.
 2. **`withOpacity` est déprécié** depuis Flutter 3.27 : utiliser `withValues(alpha: 0.12)`.
 3. **Mode sombre incomplet** : il manque `labelLarge`, l'icône de la barre d'app, `focusedErrorBorder`, l'interrupteur, la case à cocher et l'info-bulle. À compléter sur le modèle du mode clair.
 4. **Bordure de focus du mode sombre** : `primaryLight` sur fond sombre (2,5:1) est sous le seuil de 3:1. Proposition : ambre.
