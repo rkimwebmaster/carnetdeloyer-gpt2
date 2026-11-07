@@ -1,0 +1,10 @@
+# Transmettre le jeton Bearer à PHP sous Apache/XAMPP, y compris avec index.php.
+# Aucun changement des routes : le chemin de test existant reste valable.
+<IfModule mod_setenvif.c>
+    SetEnvIfNoCase Authorization "(.+)" HTTP_AUTHORIZATION=$1
+</IfModule>
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>

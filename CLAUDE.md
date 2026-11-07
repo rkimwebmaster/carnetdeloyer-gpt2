@@ -17,7 +17,7 @@ Un seul dépôt : API Symfony, application Flutter (Android, iOS, Windows), back
 
 | Dossier | Contenu |
 |---|---|
-| `api/` | Symfony 7.4 LTS : API REST `/api/v1`, back-office `/admin`, site vitrine, page publique des reçus `/r/{jeton}` |
+| `backend/` | Symfony 7.4 LTS : API REST `/api/v1`, back-office `/admin`, site vitrine, page publique des reçus `/r/{jeton}` |
 | `mobile/` | Flutter : Riverpod, Dio, go_router, Drift |
 | `docs/specification/` | Cahier des charges (référence) |
 | `docs/design/` | Charte graphique (`charte-graphique.md`), logos, maquettes `feature-numéro-écran.png`, index `maquettes.md` |
@@ -29,7 +29,7 @@ Un seul dépôt : API Symfony, application Flutter (Android, iOS, Windows), back
 
 ```bash
 # API
-cd api && composer install
+cd backend && composer install
 php bin/console doctrine:migrations:migrate
 php bin/console app:referentiels:charger      # devises, pays, villes, catégories
 php vendor/bin/phpunit                        # tests (chacun isolé en transaction)

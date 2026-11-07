@@ -1,0 +1,18 @@
+{% extends 'site/base.html.twig' %}
+{% set page = 'confidentialite' %}
+{% block title %}Confidentialité · CarnetDeLoyer{% endblock %}
+{% block content %}
+<article class="container legal-page section">
+    <span class="eyebrow">VOS DONNÉES, EN TOUTE TRANSPARENCE</span>
+    <h1>Politique de confidentialité</h1>
+    <p class="demo-tip">Version provisoire : la durée légale de conservation reste à fixer avec un juriste (spécification v2.0, section 12).</p>
+    <h2>Données collectées</h2>
+    <p>Nom, numéro de téléphone et, facultativement, adresse e-mail. Pour les locataires : nom et téléphone saisis par le bailleur, et les paiements enregistrés sur leur contrat.</p>
+    <h2>Utilisation</h2>
+    <p>Ces données servent uniquement à la gestion des loyers : contrats, échéances, paiements et reçus. Aucune donnée n'est vendue.</p>
+    <h2>Sécurité</h2>
+    <p>Les échanges sont chiffrés (HTTPS). Les numéros de téléphone et les coordonnées GPS sont chiffrés en base, et les sauvegardes sont chiffrées.</p>
+    <h2>Vos droits</h2>
+    <p>Vous pouvez télécharger vos données depuis l'application et supprimer votre compte. Les données personnelles sont alors anonymisées ; les contrats, paiements et reçus sont conservés pendant la durée légale, car l'autre partie peut en avoir besoin comme preuve.</p>
+</article>
+{% endblock %}

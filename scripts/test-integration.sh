@@ -4,7 +4,7 @@
 set -euo pipefail
 RACINE="$(cd "$(dirname "$0")/.." && pwd)"
 PORT=${PORT:-8766}
-cd "$RACINE/api"
+cd "$RACINE/backend"
 
 export APP_ENV=test
 php bin/console lexik:jwt:generate-keypair --skip-if-exists -q

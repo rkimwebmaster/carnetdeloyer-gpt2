@@ -8,15 +8,34 @@ La version du cahier des charges (v2.1) est distincte des étapes de livraison d
 
 | Dossier | Contenu |
 |---|---|
-| `api/` | API REST Symfony 7.4 (PHP 8.2 minimum, Doctrine, MySQL/MariaDB), sous `/api/v1` |
+| `backend/` | API REST Symfony 7.4 (PHP 8.2 minimum, Doctrine, MySQL/MariaDB), sous `/api/v1` |
 | `mobile/` | Application Flutter (Android, iOS, Windows) : Riverpod, Dio, go_router, Drift |
 | `scripts/` | Test de bout en bout app ↔ API |
 | `.github/workflows/` | Intégration continue (bloquante, R-154) |
 
+## Site web
+
+Le site vitrine Twig est servi à la racine du backend : accueil, fonctionnalités,
+tarifs, Market, Hôtels, connexion, inscription et démonstration. Les ressources
+sont dans `backend/public/site/` et les vues dans `backend/templates/site/`.
+L'espace `/espace` charge le profil et les chiffres réels via l'API existante.
+
+Avec XAMPP : `http://localhost/carnetdeloyer-gpt2-main/backend/public/index.php/`.
+
+En environnement Symfony **`dev` uniquement**, après une demande de code OTP,
+six chiffres au choix (par exemple `234567`) permettent de tester la connexion.
+Aucun SMS n'est envoyé dans ce mode ; expiration et usage unique restent actifs.
+Les environnements `test`, `staging` et `prod` exigent le vrai code. Le déploiement
+de production doit utiliser `APP_ENV=prod`.
+
+Vérifier les templates sans charger de base : `php scripts/verifier-site.php`.
+Les contrôleurs API sont conservés ; le comportement OTP est isolé dans
+`backend/src/Securite/ValidationOtp.php` et couvert par des tests unitaires.
+
 ## Démarrer l'API
 
 ```bash
-cd api
+cd backend
 composer install
 # Base locale : DATABASE_URL dans .env.local (MySQL 8 ou MariaDB 10.11)
 php bin/console app:referentiels:charger --verifier-schema # base existante : contrôle en lecture seule avant toute migration
@@ -62,8 +81,8 @@ Un workflow présent ne prouve pas qu’une exécution est réussie : consulter 
 
 | Commande | Couvre |
 |---|---|
-| `cd api && php vendor/bin/phpunit` | Suite API : unitaires (argent en entiers, calendrier, chiffrement, filtre de coordonnées) et fonctionnels sur base réelle (chaque test isolé en transaction) |
-| `cd api && ./tests/Concurrence/encaissements-paralleles.sh` | 30 encaissements simultanés : aucun montant perdu, reçus sans trou ni doublon, idempotence |
+| `cd backend && php vendor/bin/phpunit` | Suite API : unitaires (argent en entiers, calendrier, chiffrement, filtre de coordonnées) et fonctionnels sur base réelle (chaque test isolé en transaction) |
+| `cd backend && ./tests/Concurrence/encaissements-paralleles.sh` | 30 encaissements simultanés : aucun montant perdu, reçus sans trou ni doublon, idempotence |
 | `cd mobile && flutter test` | Suite Flutter : client HTTP et rafraîchissement du token, file de paiements hors ligne, PIN, redirections, écrans (inscription, verrou, bascule de mode, encaissement) |
 | `./scripts/test-integration.sh` | les services Flutter contre l'API réelle (parcours bailleur et locataire) |
 

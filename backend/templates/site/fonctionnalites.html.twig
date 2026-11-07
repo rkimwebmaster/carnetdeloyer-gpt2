@@ -1,0 +1,14 @@
+{% extends 'site/base.html.twig' %}
+{% block title %}Fonctionnalités · CarnetDeLoyer{% endblock %}
+{% block content %}
+<section class="container page-heading"><span class="eyebrow">UNE PLACE POUR CHAQUE INFORMATION</span><h1>Tout le fil<br>de vos <span>locations.</span></h1><p>Une organisation pensée autour de vos biens et des personnes qui les occupent.</p></section>
+<section class="container feature-grid feature-grid-wide">
+{% for feature in [
+['⌂','Biens & unités','Du bien individuel à l’immeuble, retrouvez une structure adaptée à votre patrimoine.',['Propriétés et unités regroupées','Catégories de biens','Suivi des unités louées et vacantes']],
+['▤','Contrats & échéances','Retrouvez les conditions de chaque location et les échéances associées.',['Loyer et devise du contrat','Calendrier des échéances','Historique de la location']],
+['↔','Paiements & reçus','Gardez une trace de chaque règlement, y compris lorsqu’il est partiel ou anticipé.',['Paiements partiels et avances','Reçus numérotés','Liens de partage des reçus']],
+['♧','Bailleur & locataire','Un même compte peut avoir les deux rôles, chacun avec son propre espace.',['Consultation des locations','Déclaration « J’ai payé »','Validation ou refus par le bailleur']]
+] %}<article class="feature-card"><span class="feature-icon">{{ feature[0] }}</span><h2 class="card-heading">{{ feature[1] }}</h2><p>{{ feature[2] }}</p><ul class="check-list">{% for point in feature[3] %}<li>{{ point }}</li>{% endfor %}</ul></article>{% endfor %}
+</section>
+<section id="locataire" class="section container split"><div><span class="eyebrow">LES BONNES INFORMATIONS, POUR CHACUN</span><h2>Deux modes.<br>Une relation plus claire.</h2><p>Le bailleur enregistre et valide les règlements. Le locataire consulte ses documents et signale les paiements effectués. Une déclaration en attente ne vaut pas confirmation de paiement.</p><p class="muted">Les pages web sont en cours de préparation. La démonstration présente le parcours sans accès à vos données.</p><a class="button" href="{{ path('site_demonstration') }}">Voir l’aperçu de l’espace <span>→</span></a></div>{% include 'site/_preview.html.twig' %}</section>
+{% endblock %}

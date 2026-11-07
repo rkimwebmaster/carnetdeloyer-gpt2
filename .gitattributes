@@ -1,0 +1,2 @@
+# Préserver les octets des documents, même si leurs métadonnées ressemblent à du texte.
+*.pdf binary

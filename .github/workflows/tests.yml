@@ -28,7 +28,7 @@ jobs:
           --health-interval=10s --health-timeout=5s --health-retries=10
     defaults:
       run:
-        working-directory: api
+        working-directory: backend
     env:
       APP_ENV: test
       DATABASE_URL: mysql://root:test-only@127.0.0.1:3306/cdl_ci?serverVersion=10.11.0-MariaDB&charset=utf8mb4
@@ -108,7 +108,7 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: composer install --working-dir=api --no-interaction --prefer-dist
+      - run: composer install --working-dir=backend --no-interaction --prefer-dist
       - run: flutter pub get
         working-directory: mobile
       - run: dart run build_runner build --delete-conflicting-outputs
