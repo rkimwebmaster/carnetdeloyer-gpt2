@@ -131,7 +131,7 @@ final class Presentateur
 
     public function contact(Contact $c): array
     {
-        return ['id' => $c->getId(), 'nom' => $c->getNom(), 'telephone' => $c->getTelephone(), 'inscrit' => null !== $c->getUtilisateur()];
+        return ['id' => $c->getId(), 'nom' => $c->getNom(), 'telephone' => $c->getTelephone(), 'inscrit' => $c->getUtilisateur()?->isTelephoneVerifie() ?? false];
     }
 
     public function contratResume(Contrat $c): array
@@ -142,6 +142,8 @@ final class Presentateur
             'id' => $c->getId(), 'statut' => $c->getStatut()->value,
             'unite' => ['id' => $c->getUnite()->getId(), 'nom' => $c->getUnite()->getNom(), 'propriete' => $c->getUnite()->getPropriete()->getNom(), 'categorie' => $this->categorie($c->getUnite()->getCategorie())],
             'locataire' => $this->contact($c->getLocataire()),
+            'locataireConfirmeLe' => self::dateHeure($c->getLocataireConfirmeLe()),
+            'locataireRefuseLe' => self::dateHeure($c->getLocataireRefuseLe()),
             'bailleur' => ['nom' => $c->getEspace()->nomAffiche(), 'badge' => $c->getEspace()->getBadge($this->clock->now())?->value],
             'devise' => $this->devise($c->getDevise()),
             'loyer' => $c->getLoyer(),

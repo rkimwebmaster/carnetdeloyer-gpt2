@@ -60,6 +60,7 @@ abstract class ApiTestCase extends WebTestCase
         $chiffreur = static::getContainer()->get(Chiffreur::class);
         $user = new User($telephone, $chiffreur->empreinte($telephone), $nom, 'T'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 9)));
         $user->setRoles($roles);
+        $user->verifierTelephone();
         $user->setPays($this->em()->getRepository(PaysApi::class)->findOneBy(['codeIso' => 'CD']));
         $this->em()->persist($user);
         $this->em()->flush();

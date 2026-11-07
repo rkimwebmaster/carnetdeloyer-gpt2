@@ -57,6 +57,10 @@ class User implements UserInterface
     #[ORM\Column]
     private bool $actif = true;
 
+    /** R-19, R-72 : un compte créé par le bailleur ne vaut pas vérification OTP. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $telephoneVerifie = false;
+
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
@@ -75,6 +79,7 @@ class User implements UserInterface
 
     public function getId(): ?int { return $this->id; }
     public function getTelephone(): ?string { return $this->telephone; }
+    public function getTelephoneEmpreinte(): ?string { return $this->telephoneEmpreinte; }
     public function getNom(): string { return $this->nom; }
     public function setNom(string $nom): static { $this->nom = $nom; return $this; }
     public function getEmail(): ?string { return $this->email; }
@@ -89,6 +94,14 @@ class User implements UserInterface
     public function getParrain(): ?User { return $this->parrain; }
     public function setParrain(?User $parrain): static { $this->parrain = $parrain; return $this; }
     public function isActif(): bool { return $this->actif; }
+    public function isTelephoneVerifie(): bool { return $this->telephoneVerifie; }
+    public function verifierTelephone(): void { $this->telephoneVerifie = true; }
+    public function changerTelephoneVerifie(string $telephone, string $empreinte): void
+    {
+        $this->telephone = $telephone;
+        $this->telephoneEmpreinte = $empreinte;
+        $this->telephoneVerifie = true;
+    }
     public function setActif(bool $actif): static { $this->actif = $actif; return $this; }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
     public function getAnonymiseLe(): ?\DateTimeImmutable { return $this->anonymiseLe; }

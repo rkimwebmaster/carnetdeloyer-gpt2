@@ -28,6 +28,7 @@ final class Contrats
         private readonly Abonnements $abonnements,
         private readonly Paiements $paiements,
         private readonly Activites $activites,
+        private readonly Authentification $auth,
     ) {
     }
 
@@ -69,6 +70,13 @@ final class Contrats
             if (null !== $this->abonnements->contratActif($unite)) {
                 throw new ErreurMetier('UNITE_OCCUPEE', 'Cette unité a déjà un contrat actif.', 409);
             }
+            if (null !== $locataire->getId()) {
+                $this->em->lock($locataire, LockMode::PESSIMISTIC_WRITE);
+                $this->em->refresh($locataire);
+            }
+            if (null !== $locataire->getTelephone()) {
+                $locataire->rattacher($this->auth->obtenirCompteLocataire($locataire->getTelephone(), $locataire->getNom()));
+            }
             $contrat = new Contrat($unite, $locataire, $devise, $loyer, Calendrier::jour($dateDebut), null === $dateFin ? null : Calendrier::jour($dateFin), $par);
             $contrat->prevoirGarantie($garantie);
             $this->em->persist($contrat);
@@ -83,6 +91,76 @@ final class Contrats
             $this->em->flush();
 
             return $contrat;
+        });
+    }
+
+    /** R-72 : confirmation atomique d'un seul contrat. */
+    public function confirmerLocataire(Contrat $contrat, User $user): void
+    {
+        $this->traiterRattachement($contrat, $user, false);
+    }
+
+    /** R-182 : conserver le contrat du bailleur et retirer seulement l'accès concerné. */
+    public function refuserLocataire(Contrat $contrat, User $user): void
+    {
+        $this->traiterRattachement($contrat, $user, true);
+    }
+
+    private function traiterRattachement(Contrat $contrat, User $user, bool $refus): void
+    {
+        $this->em->wrapInTransaction(function () use ($contrat, $user, $refus): void {
+            $contact = $contrat->getLocataire();
+            // Même verrou que la correction du numéro : pas de confirmation de l'ancien numéro en parallèle.
+            $this->em->lock($contact, LockMode::PESSIMISTIC_WRITE);
+            $this->em->refresh($contact);
+            $this->em->refresh($contrat);
+            if (!$user->isTelephoneVerifie() || null === $user->getTelephoneEmpreinte()
+                || $contact->getTelephoneEmpreinte() !== $user->getTelephoneEmpreinte()) {
+                throw ErreurMetier::introuvable('Rattachement');
+            }
+            if (!$refus && null !== $contrat->getLocataireRefuseLe()) {
+                throw ErreurMetier::introuvable('Rattachement');
+            }
+            if (($refus && null !== $contrat->getLocataireRefuseLe())
+                || (!$refus && null !== $contrat->getLocataireConfirmeLe())) {
+                return;
+            }
+            $contact->rattacher($user);
+            if ($refus) {
+                $contrat->refuserLocataire();
+            } else {
+                $contrat->confirmerLocataire();
+            }
+            $this->activites->enregistrer(
+                $refus ? Activites::CONTRAT_REFUSE : Activites::CONTRAT_CONFIRME,
+                $user, $contrat->getEspace(), $contrat, $contrat,
+                ['unite' => $contrat->getUnite()->getNom()], $contrat->getEspace()->getProprietaire(),
+            );
+        });
+    }
+
+    /** R-72 : correction par le bailleur uniquement avant toute confirmation. */
+    public function corrigerTelephone(Contact $contact, ?string $telephone, ?string $empreinte): void
+    {
+        $this->em->wrapInTransaction(function () use ($contact, $telephone, $empreinte): void {
+            $this->em->lock($contact, LockMode::PESSIMISTIC_WRITE);
+            $this->em->refresh($contact);
+            if ($contact->getTelephoneEmpreinte() === $empreinte) {
+                return;
+            }
+            $contrats = $this->em->getRepository(Contrat::class)->findBy(['locataire' => $contact]);
+            foreach ($contrats as $contrat) {
+                if (null !== $contrat->getLocataireConfirmeLe()) {
+                    throw new ErreurMetier('LOCATAIRE_CONFIRME', 'Le numéro a été confirmé par le locataire et ne peut plus être changé par le bailleur.', 409);
+                }
+            }
+            $contact->changerTelephone($telephone, $empreinte);
+            if (null !== $telephone) {
+                $contact->rattacher($this->auth->obtenirCompteLocataire($telephone, $contact->getNom()));
+            }
+            foreach ($contrats as $contrat) {
+                $contrat->reinitialiserRefusLocataire();
+            }
         });
     }
 

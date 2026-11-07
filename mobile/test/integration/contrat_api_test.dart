@@ -142,7 +142,7 @@ void main() {
       final locations = LocationsService(apiL, LecteurCache(apiL, base, 2));
       final aRattacher = await locations.aRattacher();
       expect(aRattacher, isNotEmpty);
-      await locations.rattacher(aRattacher.first.contactId);
+      await locations.confirmer(aRattacher.first.contratId);
       final mesContrats = (await locations.contrats()).valeur;
       expect(mesContrats.elements.map((x) => x.id), contains(c.id));
       final vue = (await locations.contrat(c.id)).valeur;

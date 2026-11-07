@@ -32,6 +32,19 @@ Vérifier les templates sans charger de base : `php scripts/verifier-site.php`.
 Les contrôleurs API sont conservés ; le comportement OTP est isolé dans
 `backend/src/Securite/ValidationOtp.php` et couvert par des tests unitaires.
 
+## Travail local et synchronisation GitHub
+
+La branche de travail quotidienne est `main` : développer et tester sur le PC,
+puis envoyer les commits vers GitHub. Aucune branche supplémentaire n'est
+nécessaire pour le travail courant. Avant une séance, `git pull --ff-only`
+récupère les éventuels commits distants ; si Git signale une divergence,
+examiner les deux historiques avant de fusionner, sans écraser les fichiers.
+
+Après les vérifications : créer un commit, puis `git push origin main`.
+La configuration propre au PC reste dans `backend/.env.local`, ignoré par Git ;
+`backend/.env` conserve le modèle partagé. Les bases, sauvegardes et clés JWT
+locales restent également exclues du dépôt.
+
 ## Démarrer l'API
 
 ```bash
@@ -113,6 +126,7 @@ Revue documentaire et ciblée du code le 5 novembre 2026 ; ce relevé n’est pa
 2. **Contrats (R-175, R-176, R-179, R-177, R-178)** : `Contrat` ne possède pas encore de périodicité ni de jour de paiement dédié. Prévoir les proratas et le renouvellement avec approbation, en protégeant les paiements existants.
 3. **Garantie et sortie (R-30, R-37)** : les champs restent intégrés à `Contrat`. Les entités séparées, les versements multiples et le prorata automatique de sortie restent à implémenter ; `Contrats::cloturer` accepte actuellement un ajustement manuel.
 4. **Identité visuelle** : thème commun bordeaux et ambre, modes clair et sombre, boutons de 50 px et pastilles accessibles. Les couleurs de statut des écrans s'adaptent au mode. La validation visuelle sur appareils reste à effectuer.
-5. **Autres parcours à auditer** : compte locataire non vérifié, refus et confirmation (R-19, R-72, R-182), preuves privées (R-180), historique des abonnements (R-183), rappels et SMS payants (R-181, R-184, R-185), cache mixte (R-186, R-187), rôles territoriaux et site vitrine (R-188, R-189).
+5. **Comptes et rattachements (R-19, R-72, R-182)** : compte provisoire, confirmation individuelle, refus et changement autonome de numéro par OTP. Voir la [migration et les tests du lot 2](docs/livraisons/2026-11-05-lot2-comptes-locataires.md).
+6. **Autres parcours à auditer** : preuves privées (R-180), historique des abonnements (R-183), rappels et SMS payants (R-181, R-184, R-185), cache mixte (R-186, R-187), rôles territoriaux et site vitrine (R-188, R-189).
 
 Tests à exécuter pour les futurs changements métier : création et confirmation du contrat, jour de paiement et proratas, renouvellement, garantie et clôture, non-régression des paiements/reçus, idempotence et accès par territoire. Les commandes ci-dessus sont des instructions ; leurs résultats ne sont pas attestés par cette revue documentaire.

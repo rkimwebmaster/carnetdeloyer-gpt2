@@ -77,7 +77,7 @@ final class Acces
     public function contratLocataire(User $user, int $id): Contrat
     {
         $c = $this->em->find(Contrat::class, $id);
-        if (null === $c || $c->getLocataire()->getUtilisateur()?->getId() !== $user->getId()) {
+        if (null === $c || !$c->estAccessibleParLocataire($user)) {
             throw ErreurMetier::introuvable('Contrat');
         }
 

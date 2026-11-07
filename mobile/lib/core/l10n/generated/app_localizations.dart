@@ -979,8 +979,80 @@ abstract class AppLocalizations {
   /// No description provided for @locationsRattacher.
   ///
   /// In fr, this message translates to:
-  /// **'Rattacher'**
+  /// **'Confirmer ce contrat'**
   String get locationsRattacher;
+
+  /// No description provided for @locationsRefuser.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ne me concerne pas'**
+  String get locationsRefuser;
+
+  /// No description provided for @profilChangerTelephone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer mon numéro'**
+  String get profilChangerTelephone;
+
+  /// No description provided for @profilTelephoneAide.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérifiez votre nouveau numéro par SMS. Votre compte, vos contrats et vos reçus seront conservés.'**
+  String get profilTelephoneAide;
+
+  /// No description provided for @profilEnvoyerCode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer le code'**
+  String get profilEnvoyerCode;
+
+  /// No description provided for @profilCodeEnvoye.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code envoyé au nouveau numéro.'**
+  String get profilCodeEnvoye;
+
+  /// No description provided for @erreurTELEPHONE_DEJA_UTILISE.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce numéro appartient déjà à un autre compte. Choisissez un autre numéro.'**
+  String get erreurTELEPHONE_DEJA_UTILISE;
+
+  /// No description provided for @activiteContratConfirme.
+  ///
+  /// In fr, this message translates to:
+  /// **'Contrat confirmé par le locataire : {unite}'**
+  String activiteContratConfirme(String unite);
+
+  /// No description provided for @activiteContratRefuse.
+  ///
+  /// In fr, this message translates to:
+  /// **'Contrat refusé par le locataire : {unite}. Vérifiez le numéro.'**
+  String activiteContratRefuse(String unite);
+
+  /// No description provided for @locationsRefusAide.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce contrat sera retiré de votre espace. Le bailleur sera informé et pourra corriger le numéro ; son contrat restera conservé.'**
+  String get locationsRefusAide;
+
+  /// No description provided for @erreurLOCATAIRE_CONFIRME.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce numéro a déjà été confirmé. Seul le locataire peut le changer après vérification OTP.'**
+  String get erreurLOCATAIRE_CONFIRME;
+
+  /// No description provided for @erreurTELEPHONE_NON_VERIFIE.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérifiez votre numéro de téléphone par OTP pour continuer.'**
+  String get erreurTELEPHONE_NON_VERIFIE;
+
+  /// No description provided for @erreurCONFIRMATION_PAR_CONTRAT_REQUISE.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmez chaque contrat séparément depuis Mes locations.'**
+  String get erreurCONFIRMATION_PAR_CONTRAT_REQUISE;
 
   /// No description provided for @locationsARattacher.
   ///

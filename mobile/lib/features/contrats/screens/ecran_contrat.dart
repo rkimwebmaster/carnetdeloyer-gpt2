@@ -12,11 +12,13 @@ import '../providers/contrats_providers.dart';
 
 /// Détail d'un contrat vu par le bailleur ou par le locataire ([locataire]).
 class EcranContrat extends ConsumerWidget {
-  const EcranContrat({super.key, required this.id, this.vue});
+  const EcranContrat({super.key, required this.id, this.vue, this.actions = const [], this.recharger});
   final int id;
 
   /// Pour le mode locataire, la vue est fournie par l'écran appelant.
   final AsyncValue<Contrat>? vue;
+  final List<Widget> actions;
+  final VoidCallback? recharger;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,6 +29,7 @@ class EcranContrat extends ConsumerWidget {
       appBar: AppBar(
         title: Text(valeur.value?.unite.nom ?? ''),
         actions: [
+          ...actions,
           if (estBailleur && valeur.value?.statut == 'actif')
             PopupMenuButton<String>(
               onSelected: (_) => _cloturer(context, ref, valeur.value!),
@@ -44,9 +47,9 @@ class EcranContrat extends ConsumerWidget {
           : null,
       body: VueAsync(
         valeur: valeur,
-        reessayer: () => ref.invalidate(contratProvider(id)),
+        reessayer: recharger ?? () => ref.invalidate(contratProvider(id)),
         donnees: (c) => RefreshIndicator(
-          onRefresh: () async => ref.invalidate(contratProvider(id)),
+          onRefresh: () async => (recharger ?? () => ref.invalidate(contratProvider(id)))(),
           child: ListView(padding: const EdgeInsets.only(bottom: 96), children: [
             _Entete(contrat: c),
             _Titre(l.contratEcheances),

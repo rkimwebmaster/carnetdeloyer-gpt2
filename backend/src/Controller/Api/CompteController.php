@@ -77,7 +77,7 @@ final class CompteController extends ApiController
             $qb->andWhere('a.espace = :e OR a.destinataire = :u')->setParameter('e', $this->espaces->de($moi))->setParameter('u', $moi);
         } else {
             $qb->leftJoin('a.contrat', 'c')->leftJoin('c.locataire', 'l')
-                ->andWhere('(l.utilisateur = :u AND a.type IN (:typesLocataire)) OR a.destinataire = :u')
+                ->andWhere('(l.utilisateur = :u AND c.locataireConfirmeLe IS NOT NULL AND c.locataireRefuseLe IS NULL AND a.type IN (:typesLocataire)) OR a.destinataire = :u')
                 ->setParameter('u', $moi)
                 ->setParameter('typesLocataire', ['paiement_enregistre', 'paiement_annule', 'declaration_validee', 'declaration_refusee', 'contrat_cree', 'contrat_cloture']);
         }

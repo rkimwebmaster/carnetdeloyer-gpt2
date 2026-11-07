@@ -57,6 +57,10 @@ jobs:
           php bin/console doctrine:migrations:migrate --no-interaction
           php bin/console app:referentiels:charger
           bash tests/Concurrence/encaissements-paralleles.sh
+      - name: Reprise des comptes et confirmations historiques sur base jetable
+        env:
+          CDL_MIGRATION_DSN: mysql://root:test-only@127.0.0.1:3306/cdl_reprise_ci
+        run: php tests/Migrations/reprise-locataires.php
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -76,6 +80,7 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - run: flutter gen-l10n
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter analyze
       - run: flutter test
@@ -110,6 +115,8 @@ jobs:
           cache: true
       - run: composer install --working-dir=backend --no-interaction --prefer-dist
       - run: flutter pub get
+        working-directory: mobile
+      - run: flutter gen-l10n
         working-directory: mobile
       - run: dart run build_runner build --delete-conflicting-outputs
         working-directory: mobile

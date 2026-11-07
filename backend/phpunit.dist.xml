@@ -13,6 +13,8 @@
     <php>
         <ini name="display_errors" value="1" />
         <ini name="error_reporting" value="-1" />
+        <!-- MockClock utilise UTC : mêmes dates en CI et sur un PC XAMPP. -->
+        <ini name="date.timezone" value="UTC" />
         <server name="APP_ENV" value="test" force="true" />
         <server name="SHELL_VERBOSITY" value="-1" />
     </php>

@@ -19,6 +19,10 @@ class LecteurCache {
   final BaseLocale base;
   final int utilisateurId;
 
+  Future<void> effacer(String prefixe) async {
+    await base.supprimerCache(utilisateurId, prefixe);
+  }
+
   Future<Lecture<T>> lire<T>(String chemin, T Function(dynamic json) convertir, {Map<String, dynamic>? parametres}) async {
     final cle = parametres == null ? chemin : '$chemin?${Uri(queryParameters: parametres.map((k, v) => MapEntry(k, '$v'))).query}';
     try {

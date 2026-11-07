@@ -19,6 +19,12 @@ abstract class ApiController extends AbstractController
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
+        if (!$user->isActif()) {
+            throw new \App\Api\ErreurMetier('COMPTE_SUSPENDU', 'Ce compte est suspendu.', 403);
+        }
+        if (!$user->isTelephoneVerifie()) {
+            throw new \App\Api\ErreurMetier('TELEPHONE_NON_VERIFIE', 'Vérifiez votre téléphone par OTP.', 403);
+        }
 
         return $user;
     }

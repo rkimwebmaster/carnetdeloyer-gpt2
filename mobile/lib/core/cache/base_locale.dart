@@ -62,6 +62,10 @@ class BaseLocale extends _$BaseLocale {
     return ligne == null ? null : jsonDecode(ligne.json);
   }
 
+  /// Une décision de refus ne doit pas laisser d'anciennes données en secours hors ligne.
+  Future<int> supprimerCache(int utilisateurId, String prefixe) =>
+      (delete(cacheReponses)..where((c) => c.utilisateurId.equals(utilisateurId) & c.cle.like('$prefixe%'))).go();
+
   // --- File d'attente des paiements ----------------------------------------
 
   Future<void> ajouterPaiement(PaiementsEnAttenteCompanion paiement) => into(paiementsEnAttente).insert(paiement);

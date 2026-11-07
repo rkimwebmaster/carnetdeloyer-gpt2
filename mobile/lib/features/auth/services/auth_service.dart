@@ -18,6 +18,8 @@ class AuthService {
 
   Future<void> demanderCode(String telephone) => api.post('/auth/otp', {'telephone': telephone});
 
+  Future<void> changerTelephone(String telephone, String code) => api.post('/moi/telephone', {'telephone': telephone, 'code': code});
+
   Future<ResultatOtp> verifier(String telephone, String code) async {
     final r = await api.post('/auth/otp/verification', {'telephone': telephone, 'code': code}) as Map<String, dynamic>;
     if (r['inscriptionRequise'] == true) return ResultatOtp(jetonInscription: r['jetonInscription'] as String);
